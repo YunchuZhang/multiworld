@@ -23,8 +23,7 @@ class MujocoEnv(gym.Env):
                  model_path,
                  frame_skip,
                  device_id=-1,
-                 automatically_set_spaces=False,
-                 num_cameras=1):
+                 automatically_set_spaces=False):
 
         if model_path.startswith("/"):
             fullpath = model_path
@@ -38,7 +37,7 @@ class MujocoEnv(gym.Env):
         self.data = self.sim.data
         self.viewer = None
 
-        self.num_cameras = 1
+        self.num_cameras = None
         self.viewers = []
 
         self.metadata = {
@@ -150,25 +149,45 @@ class MujocoEnv(gym.Env):
         ])
 
 
-    def get_image(self, width=84, height=84, camera_name=None):
+    def get_image(self, width=84, height=84, camera_name=None, depth=False):
         if self.num_cameras == 1:
             return self.sim.render(
                 width=width,
                 height=height,
                 camera_name=camera_name,
             )
-        else:
-            images = []
-            for viewer in self.viewers:
-                # TODO handle camera_name to get camera_id
-                viewer.render(width=width, height=height, camera_id=None)
+
+        images = []
+        if depth:
+            depths = []
+        for viewer in self.viewers:
+            # TODO handle camera_name to get camera_id
+            viewer.render(width=width, height=height, camera_id=None)
+            if depth:
+                im, depth = viewer.read_pixels(width, height, depth=True)
+                images.append(im)
+                depths.append(depth)
+            else:
                 im = viewer.read_pixels(width, height, depth=False)
                 images.append(im)
 
-            return np.array(images)
+        if depth:
+            return np.array(images), np.array(depths)
+
+        return np.array(images)
 
 
-    def initialize_camera(self, init_fctn):
+    def get_camera_angles(self):
+        angles = []
+        for viewer in self.viewers:
+            angles.append([viewer.cam.elevation,
+                           viewer.cam.azimuth])
+
+        return angles
+
+
+    def initialize_camera(self, init_fctn, num_cameras=1):
+        self.num_cameras = num_cameras
         sim = self.sim
         cameras = []
         for i in range(self.num_cameras):

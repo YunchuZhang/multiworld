@@ -18,7 +18,11 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             wrapped_env,
             imsize=84,
             init_camera=None,
+            num_cameras=1,
+            depth=False,
+            cam_angles=False,
             transpose=False,
+            flatten=True,
             grayscale=False,
             normalize=False,
             reward_type='wrapped_env',
@@ -52,7 +56,11 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self.wrapped_env.hide_goal_markers = True
         self.imsize = imsize
         self.init_camera = init_camera
+        self.num_cameras = num_cameras
+        self.depth = depth
+        self.cam_angles = cam_angles
         self.transpose = transpose
+        self.flatten = flatten
         self.grayscale = grayscale
         self.normalize = normalize
         self.recompute_reward = recompute_reward
@@ -76,7 +84,9 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             # viewer = mujoco_py.MjRenderContextOffscreen(sim, device_id=-1)
             # init_camera(viewer.cam)
             # sim.add_render_context(viewer)
-        img_space = Box(0, 1, (self.image_length,), dtype=np.float32)
+
+        if self.flatten:
+            img_space = Box(0, 1, (self.image_length,), dtype=np.float32)
         self._img_goal = img_space.sample() #has to be done for presampling
         spaces = self.wrapped_env.observation_space.spaces.copy()
         spaces['observation'] = img_space
@@ -139,11 +149,11 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
                 obs[key] = goal[key]
         elif self.non_presampled_goal_img_is_garbage:
             # This is use mainly for debugging or pre-sampling goals.
-            self._img_goal = self._get_flat_img()
+            self._img_goal, _ = self._get_img()
         else:
             env_state = self.wrapped_env.get_env_state()
             self.wrapped_env.set_to_goal(self.wrapped_env.get_goal())
-            self._img_goal = self._get_flat_img()
+            self._img_goal, _ = self._get_img()
             self.wrapped_env.set_env_state(env_state)
 
         return self._update_obs(obs)
@@ -152,8 +162,15 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         return self._update_obs(self.wrapped_env._get_obs())
 
     def _update_obs(self, obs):
-        img_obs = self._get_flat_img()
+        img_obs, depths = self._get_img()
         obs['image_observation'] = img_obs
+
+        if self.depth:
+            obs['depth_observation'] = depths
+
+        if self.cam_angles:
+            obs['cam_angles_observation'] = self.wrapped_env.get_camera_angles()
+
         obs['image_desired_goal'] = self._img_goal
         obs['image_achieved_goal'] = img_obs
         obs['observation'] = img_obs
@@ -173,21 +190,45 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
         return obs
 
-    def _get_flat_img(self):
-        image_obs = self._wrapped_env.get_image(
-            width=self.imsize,
-            height=self.imsize,
-        )
+
+    def _get_img(self):
+        if self.depth:
+            image_obs, depths = self._wrapped_env.get_image(
+                width=self.imsize,
+                height=self.imsize,
+                depth=self.depth
+            )
+        else:
+            image_obs = self._wrapped_env.get_image(
+                width=self.imsize,
+                height=self.imsize,
+                depth=self.depth
+            )
         self._last_image = image_obs
+
         if self.grayscale:
+            # TODO: Currently not compatible with multi-camera image_obs
             image_obs = Image.fromarray(image_obs).convert('L')
             image_obs = np.array(image_obs)
+
         if self.normalize:
             image_obs = image_obs / 255.0
         if self.transpose:
-            image_obs = image_obs.transpose()
-        assert image_obs.shape[0] == self.channels
-        return image_obs.flatten()
+            image_obs = np.swapaxes(image_obs, -2, -1)
+            if self.depth:
+                depths = np.swapaxes(depths, -2, -1)
+
+        if self.num_cameras == 1:
+            assert image_obs.shape[0] == self.channels
+
+        if self.flatten:
+            return image_obs.flatten()
+
+        if self.depth:
+            return image_obs, depths
+
+        return image_obs, None
+
 
     def render(self, mode='wrapped'):
         if mode == 'wrapped':
@@ -197,6 +238,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
                 self._last_image = self._wrapped_env.get_image(
                     width=self.imsize,
                     height=self.imsize,
+                    depth=False
                 )
             cv2.imshow('ImageEnv', self._last_image)
             cv2.waitKey(1)
@@ -232,7 +274,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         for i in range(batch_size):
             goal = self.unbatchify_dict(goals, i)
             self.wrapped_env.set_to_goal(goal)
-            img_goals[i, :] = self._get_flat_img()
+            img_goals[i, :], _ = self._get_img()
         self.wrapped_env.set_env_state(pre_state)
         goals['desired_goal'] = img_goals
         goals['image_desired_goal'] = img_goals
