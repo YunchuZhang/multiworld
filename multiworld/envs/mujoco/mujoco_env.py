@@ -160,13 +160,14 @@ class MujocoEnv(gym.Env):
         images = []
         if depth:
             depths = []
+
         for viewer in self.viewers:
             # TODO handle camera_name to get camera_id
             viewer.render(width=width, height=height, camera_id=None)
             if depth:
-                im, depth = viewer.read_pixels(width, height, depth=True)
+                im, d = viewer.read_pixels(width, height, depth=True)
                 images.append(im)
-                depths.append(depth)
+                depths.append(d)
             else:
                 im = viewer.read_pixels(width, height, depth=False)
                 images.append(im)
@@ -183,7 +184,7 @@ class MujocoEnv(gym.Env):
             angles.append([viewer.cam.elevation,
                            viewer.cam.azimuth])
 
-        return angles
+        return np.array(angles)
 
 
     def initialize_camera(self, init_fctn, num_cameras=1):

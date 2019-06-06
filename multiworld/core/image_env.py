@@ -11,6 +11,7 @@ from multiworld.core.wrapper_env import ProxyEnv
 from multiworld.envs.env_util import concatenate_box_spaces
 from multiworld.envs.env_util import get_stat_in_paths, create_stats_ordered_dict
 
+import pdb
 
 class ImageEnv(ProxyEnv, MultitaskEnv):
     def __init__(
@@ -80,16 +81,16 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         # Flattened past image queue
         # init camera
         if init_camera is not None:
-            sim = self._wrapped_env.initialize_camera(init_camera)
+            sim = self._wrapped_env.initialize_camera(init_camera, num_cameras=self.num_cameras)
             # viewer = mujoco_py.MjRenderContextOffscreen(sim, device_id=-1)
             # init_camera(viewer.cam)
             # sim.add_render_context(viewer)
 
         if self.flatten:
-            img_space_shape = np.array(self.num_cameras, self.image_length)
+            img_space_shape = np.array([self.num_cameras, self.image_length])
             img_space_shape = np.delete(img_space_shape, np.argwhere(img_space_shape == 1))
         else:
-            img_space_shape = np.array(self.num_cameras, self.imsize, self.imsize, self.num_channels)
+            img_space_shape = np.array([self.num_cameras, self.imsize, self.imsize, self.channels])
             img_space_shape = np.delete(img_space_shape, np.argwhere(img_space_shape == 1))
         img_space = Box(0, 1, img_space_shape, dtype=np.float32)
 
@@ -103,20 +104,21 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         spaces['image_achieved_goal'] = img_space
 
         self.return_image_proprio = False
-        if 'proprio_observation' in spaces.keys():
-            self.return_image_proprio = True
-            spaces['image_proprio_observation'] = concatenate_box_spaces(
-                spaces['image_observation'],
-                spaces['proprio_observation']
-            )
-            spaces['image_proprio_desired_goal'] = concatenate_box_spaces(
-                spaces['image_desired_goal'],
-                spaces['proprio_desired_goal']
-            )
-            spaces['image_proprio_achieved_goal'] = concatenate_box_spaces(
-                spaces['image_achieved_goal'],
-                spaces['proprio_achieved_goal']
-            )
+        #TODO: Figure out what's going on here
+        #if 'proprio_observation' in spaces.keys():
+        #    self.return_image_proprio = True
+        #    spaces['image_proprio_observation'] = concatenate_box_spaces(
+        #        spaces['image_observation'],
+        #        spaces['proprio_observation']
+        #    )
+        #    spaces['image_proprio_desired_goal'] = concatenate_box_spaces(
+        #        spaces['image_desired_goal'],
+        #        spaces['proprio_desired_goal']
+        #    )
+        #    spaces['image_proprio_achieved_goal'] = concatenate_box_spaces(
+        #        spaces['image_achieved_goal'],
+        #        spaces['proprio_achieved_goal']
+        #    )
 
         self.observation_space = Dict(spaces)
         self.action_space = self.wrapped_env.action_space
@@ -132,6 +134,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
     def step(self, action):
         obs, reward, done, info = self.wrapped_env.step(action)
         new_obs = self._update_obs(obs)
+        pdb.set_trace()
         if self.recompute_reward:
             reward = self.compute_reward(action, new_obs)
         self._update_info(info, obs)
