@@ -86,7 +86,13 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             # sim.add_render_context(viewer)
 
         if self.flatten:
-            img_space = Box(0, 1, (self.image_length,), dtype=np.float32)
+            img_space_shape = np.array(self.num_cameras, self.image_length)
+            img_space_shape = np.delete(img_space_shape, np.argwhere(img_space_shape == 1))
+        else:
+            img_space_shape = np.array(self.num_cameras, self.imsize, self.imsize, self.num_channels)
+            img_space_shape = np.delete(img_space_shape, np.argwhere(img_space_shape == 1))
+        img_space = Box(0, 1, img_space_shape, dtype=np.float32)
+
         self._img_goal = img_space.sample() #has to be done for presampling
         spaces = self.wrapped_env.observation_space.spaces.copy()
         spaces['observation'] = img_space
@@ -222,6 +228,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             assert image_obs.shape[0] == self.channels
 
         if self.flatten:
+            #TODO: currently not compatible with multi-camera image_obs
             return image_obs.flatten()
 
         if self.depth:
