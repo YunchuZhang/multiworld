@@ -89,7 +89,7 @@ def sawyer_pick_and_place_camera(camera):
     camera.lookat[2] = .1
     camera.distance = .7
     camera.elevation = 0
-    camera.azimuth = 180
+    camera.azimuth = 0
     camera.trackbodyid = 0
 
 def sawyer_pick_and_place_camera_zoomed(camera):
@@ -211,4 +211,14 @@ def sawyer_init_camera_zoomed_in(camera):
     camera.elevation = cam_pos[4]
     camera.azimuth = cam_pos[5]
     camera.trackbodyid = -1
+
+def init_single_camera(camera, i, n, angle_range=180., start_angle=135.): 
+    sawyer_pick_and_place_camera(camera)
+    camera.azimuth = angle_range / (n - 1) * i + start_angle
+    print(i)
+
+def init_multiple_cameras(viewer_list): 
+    n_cameras = len(viewer_list)
+    for i in range(n_cameras): 
+        init_single_camera(viewer_list[i].cam, i, n_cameras)
 

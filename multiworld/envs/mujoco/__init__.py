@@ -13,7 +13,8 @@ def register_mujoco_envs():
     REGISTERED = True
     LOGGER.info("Registering multiworld mujoco gym environments")
     from multiworld.envs.mujoco.cameras import (
-        sawyer_init_camera_zoomed_in
+        sawyer_init_camera_zoomed_in, 
+        init_multiple_cameras
     )
     """
     Reaching tasks
@@ -355,6 +356,9 @@ def register_mujoco_envs():
             action_scale=0.02,
             hide_goal_markers=True,
             num_goals_presampled=1000,
+            reward_type='hand_and_obj_success',
+            indicator_threshold=0.06,
+            p_obj_in_hand=1.,
         )
 
     )
@@ -429,6 +433,63 @@ def register_mujoco_envs():
 
     )
 
+    # audrey 
+
+    register(
+        id='SawyerPickupEnv-v1',
+        entry_point='multiworld.envs.mujoco.sawyer_xyz'
+                    '.sawyer_pick_and_place:SawyerPickAndPlaceEnvV2',
+        tags={
+            'git-commit-hash': '30f23f7',
+            'author': 'steven',
+        },
+        kwargs=dict(
+            hand_low=(-0.1, 0.55, 0.05),
+            hand_high=(0.0, 0.65, 0.2),
+            action_scale=0.02,
+            hide_goal_markers=True,
+            num_goals_presampled=1000,
+            reward_type='hand_obj_success',
+            indicator_threshold=0.06,
+
+        )
+
+    )
+
+    register(
+        id='SawyerPickupEnv-v3',
+        entry_point=test_multiple_cameras,
+        tags={
+            'git-commit-hash': '8bfd74b40f983e15026981344323b8e9539b4b21',
+            'author': 'steven'
+        },
+    )
+
+    register(
+        id='SawyerPickupEnv-v2',
+        entry_point='multiworld.envs.mujoco.sawyer_xyz'
+                    '.sawyer_pick_and_place:SawyerPickAndPlaceEnvV2',
+        tags={
+            'git-commit-hash': '30f23f7',
+            'author': 'steven',
+        },
+        kwargs=dict(
+            hand_low=(-0.1, 0.55, 0.05),
+            hand_high=(0.0, 0.65, 0.2),
+            action_scale=0.02,
+            hide_goal_markers=False,
+            num_goals_presampled=1000,
+            reward_type='hand_and_obj_success',
+            indicator_threshold=0.06,
+
+        )
+
+    )
+
+
+    #
+
+
     register(
         id='SawyerPickupWideResetFreeEnv-v0',
         entry_point='multiworld.envs.mujoco.sawyer_xyz'
@@ -463,6 +524,7 @@ def register_mujoco_envs():
             action_scale=0.02,
             hide_goal_markers=True,
             num_goals_presampled=1000,
+            p_obj_in_hand=.75,
         )
 
     )
@@ -687,3 +749,18 @@ def create_image_48_sawyer_pickup_easy_v0():
         normalize=True,
         presampled_goals=goals,
     )
+
+def test_multiple_cameras():
+    from multiworld.core.image_env import ImageEnv
+    from multiworld.envs.mujoco.cameras import init_multiple_cameras
+    import os.path
+    import numpy as np
+
+    return ImageEnv(
+        wrapped_env=gym.make('SawyerPickupEnv-v1'),
+        imsize=500,
+        init_camera=init_multiple_cameras,
+        transpose=True,
+        normalize=True,
+    )
+

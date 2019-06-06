@@ -5,6 +5,7 @@ from gym.utils import seeding
 import numpy as np
 from os import path
 import gym
+import matplotlib.pyplot as plt
 
 try:
     import mujoco_py
@@ -119,10 +120,17 @@ class MujocoEnv(gym.Env):
 
     def render(self, mode='human'):
         if mode == 'rgb_array':
-            self._get_viewer().render()
+            
             # window size used for old mujoco-py:
             width, height = 500, 500
-            width, height = 4000, 4000
+
+            self._get_viewer().render(width, height)
+
+            # for i in range(self.num_cameras): 
+            #     self.viewers[i].render(width, height)
+            #     data = self.viewers[i].read_pixels(width, height, depth=False)
+            #     plt.imsave('/home/audrey/img_results/rgb/rgb_' + str(i) + '.png', data)
+            # self._get_viewer().render(width, height)
             data = self._get_viewer().read_pixels(width, height, depth=False)
             # original image is upside-down, so flip it
             return data[::-1, :, :]
@@ -136,9 +144,19 @@ class MujocoEnv(gym.Env):
 
     def _get_viewer(self):
         if self.viewer is None:
-            self.viewer = mujoco_py.MjViewer(self.sim)
+            self.viewer = mujoco_py.MjRenderContextOffscreen(self.sim, device_id=self.device_id)
+            # for i in range(self.num_cameras): 
+            #     self.viewers.append(mujoco_py.MjRenderContextOffscreen(self.sim, device_id=self.device_id))
             self.viewer_setup()
         return self.viewer
+
+    def _get_multi_viewer(self, num_ele, num_azi, ele_low = -60, ele_high = 0, ele_offset = 0, azi_low = 45, azi_high = 315, azi_offset = 90.): 
+        if self.viewers == []: 
+            self.num_cameras = num_ele * num_azi
+            for i in range(self.num_cameras): 
+                self.viewers.append(mujoco_py.MjRenderContextOffscreen(self.sim, device_id=self.device_id))
+            self.multi_viewer_setup(num_ele, num_azi, ele_low, ele_high, ele_offset, azi_low, azi_high, azi_offset)
+        return self.viewers
 
     def get_body_com(self, body_name):
         return self.data.get_body_xpos(body_name)
@@ -150,7 +168,8 @@ class MujocoEnv(gym.Env):
         ])
 
 
-    def get_image(self, width=84, height=84, camera_name=None):
+    def get_image(self, width=500, height=500, camera_name=None):
+        self._get_viewer().render(width, height)
         if self.num_cameras == 1:
             return self.sim.render(
                 width=width,
@@ -158,26 +177,39 @@ class MujocoEnv(gym.Env):
                 camera_name=camera_name,
             )
         else:
-            images = []
-            for viewer in self.viewers:
-                # TODO handle camera_name to get camera_id
-                viewer.render(width=width, height=height, camera_id=None)
-                im = viewer.read_pixels(width, height, depth=False)
-                images.append(im)
+            rgb_all = np.zeros([self.num_cameras, height, width, 3])
+            depth_all = np.zeros([self.num_cameras, height, width])
 
-            return np.array(images)
+            for i in range(self.num_cameras):
+                # TODO handle camera_name to get camera_id
+                self.viewers[i].render(width=width, height=height)
+                rgb, depth = self.viewers[i].read_pixels(width, height, depth=True)
+
+                print(i, self.viewers[i].cam.elevation, self.viewers[i].cam.azimuth)
+
+                plt.imsave('/home/audrey/img_results/rgb/' + str(i) + '.png', rgb[::-1, :, :])
+                plt.close()
+                plt.imsave('/home/audrey/img_results/depth/' + str(i) + '.png', depth[::-1, :])
+                plt.close()
+                
+                
+                rgb_all[i] = rgb[::-1, :, :]
+                depth_all[i] = depth[::-1, :]
+
+            # plt.savefig('/home/audrey/img_results/all.png')
+            # plt.close()
+
+            return rgb_all, depth_all
 
 
     def initialize_camera(self, init_fctn):
         sim = self.sim
-        cameras = []
         for i in range(self.num_cameras):
             viewer = mujoco_py.MjRenderContextOffscreen(sim, device_id=self.device_id)
             self.viewers.append(viewer)
-            cameras.append(viewer.cam)
         # viewer = mujoco_py.MjViewer(sim)
         if self.num_cameras == 1:
             init_fctn(cameras[0])
             sim.add_render_context(self.viewers[0])
         else:
-            init_fctn(cameras)
+            init_fctn(self.viewers)
