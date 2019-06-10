@@ -167,6 +167,10 @@ class MujocoEnv(gym.Env):
             if depth:
                 im, d = viewer.read_pixels(width, height, depth=True)
                 images.append(im)
+
+                near = viewer.scn.camera[0].frustum_near
+                far = viewer.scn.camera[0].frustum_far
+                d = far * near / (far - (far - near) * d)
                 depths.append(d)
             else:
                 im = viewer.read_pixels(width, height, depth=False)
