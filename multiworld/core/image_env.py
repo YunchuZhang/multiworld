@@ -11,8 +11,6 @@ from multiworld.core.wrapper_env import ProxyEnv
 from multiworld.envs.env_util import concatenate_box_spaces
 from multiworld.envs.env_util import get_stat_in_paths, create_stats_ordered_dict
 
-import pdb
-
 class ImageEnv(ProxyEnv, MultitaskEnv):
     def __init__(
             self,
@@ -107,6 +105,21 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         spaces['image_desired_goal'] = img_space
         spaces['image_achieved_goal'] = img_space
 
+        if self.depth:
+            depth_space_shape = np.array([self.num_cameras, self.imsize, self.imsize])
+            depth_space_shape = np.delete(depth_space_shape, np.argwhere(depth_space_shape == 1))
+
+            depth_space = Box(0, float('inf'), depth_space_shape, dtype=np.float32)
+
+            spaces['depth_observation'] = depth_space
+
+        if self.cam_angles:
+
+            cam_space_shape = (num_cameras, 2)
+            cam_space = Box(float('-inf'), float('inf'), cam_space_shape, dtype=np.float32)
+
+            spaces['cam_angles_observation'] = cam_space
+
         self.return_image_proprio = False
         #TODO: Figure out what's going on here
         #if 'proprio_observation' in spaces.keys():
@@ -138,7 +151,6 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
     def step(self, action):
         obs, reward, done, info = self.wrapped_env.step(action)
         new_obs = self._update_obs(obs)
-        pdb.set_trace()
         if self.recompute_reward:
             reward = self.compute_reward(action, new_obs)
         self._update_info(info, obs)
