@@ -92,7 +92,11 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         else:
             img_space_shape = np.array([self.num_cameras, self.imsize, self.imsize, self.channels])
             img_space_shape = np.delete(img_space_shape, np.argwhere(img_space_shape == 1))
-        img_space = Box(0, 1, img_space_shape, dtype=np.float32)
+
+        if self.normalize:
+            img_space = Box(0, 1, img_space_shape, dtype=np.float32)
+        else:
+            img_space = Box(0, 255, img_space_shape, dtype=np.uint8)
 
         self._img_goal = img_space.sample() #has to be done for presampling
         spaces = self.wrapped_env.observation_space.spaces.copy()
@@ -222,13 +226,12 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
         if self.normalize:
             image_obs = image_obs / 255.0
-        if self.transpose:
-            image_obs = np.swapaxes(image_obs, -2, -1)
-            if self.depth:
-                depths = np.swapaxes(depths, -2, -1)
 
-        if self.num_cameras == 1:
-            assert image_obs.shape[0] == self.channels
+        # Changes from (H, W, C) to (C, W, H)
+        if self.transpose:
+            image_obs = np.swapaxes(image_obs, -3, -1)
+            if self.depth:
+                depths = np.swapaxes(depths, -3, -1)
 
         if self.flatten:
             #TODO: currently not compatible with multi-camera image_obs
