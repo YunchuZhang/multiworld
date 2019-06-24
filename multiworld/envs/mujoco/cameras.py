@@ -1,4 +1,10 @@
 import numpy as np
+import ipdb
+st = ipdb.set_trace
+import random
+import pickle
+angle_fp = "/home/mprabhud/rl/softlearning/possible_ang.p"
+elev_ang = pickle.load(open(angle_fp,"rb"))
 
 def create_sawyer_camera_init(
         lookat=(0, 0.85, 0.3),
@@ -194,8 +200,8 @@ def sawyer_init_camera_zoomed_in(camera):
     #rotation_angle = 90
     #cam_dist = 1
     #cam_pos = np.array([0, 0.5, 0.2, cam_dist, -45, rotation_angle])
-
     # 3rd person view
+
     cam_dist = 0.3
     rotation_angle = 270
     cam_pos = np.array([0, 0.85, 0.2, cam_dist, -45, rotation_angle])
@@ -213,13 +219,32 @@ def sawyer_init_camera_zoomed_in(camera):
     camera.trackbodyid = -1
 
 
-def init_single_camera(camera, i, n, angle_range=180., start_angle=135.): 
+def init_single_camera(camera): 
     sawyer_pick_and_place_camera(camera)
-    camera.azimuth = angle_range / (n - 1) * i + start_angle
+    elev,azim  = random.choice(elev_ang)
+    camera.elevation = elev
+    camera.azimuth = azim
+    # camera.azimuth = angle_range / (n - 1) * i + start_angle
+    # camera.azimuth =0
+    print(camera.azimuth,camera.elevation)
+    # camera.azimuth = angle_range / (n - 1) * i + start_angle
     #print(i)
 
 
 def init_multiple_cameras(cameras): 
     n_cameras = len(cameras)
-    for i in range(n_cameras): 
-        init_single_camera(cameras[i], i, n_cameras)
+    print("number of cameras ",n_cameras)
+    # st()
+    # if n_cameras==4:
+    #     num_angles = 4
+    #     num_elevs = 1
+    # # ideally
+    # else:
+    #     num_angles = 18
+    #     num_elevs = 3
+    # for angle_i in range(num_angles):
+    #     for elev_i in range(num_elevs): 
+    #         curr_camera = angle_i*num_elevs +elev_i
+    #         print(curr_camera,"curr camera")
+    for curr_camera in range(n_cameras):
+        init_single_camera(cameras[curr_camera])

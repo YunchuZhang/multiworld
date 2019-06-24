@@ -5,12 +5,17 @@ import numpy as np
 import warnings
 from PIL import Image
 from gym.spaces import Box, Dict
+from scipy.misc import imsave
 
 from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.core.wrapper_env import ProxyEnv
 from multiworld.envs.env_util import concatenate_box_spaces
 from multiworld.envs.env_util import get_stat_in_paths, create_stats_ordered_dict
+import ipdb
+import os.path as path
+import pickle
 
+st = ipdb.set_trace
 class ImageEnv(ProxyEnv, MultitaskEnv):
     def __init__(
             self,
@@ -64,7 +69,20 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self.normalize = normalize
         self.recompute_reward = recompute_reward
         self.non_presampled_goal_img_is_garbage = non_presampled_goal_img_is_garbage
-
+        num_angles = 18
+        num_elevs = 3
+        start_angle = 0
+        angle_delta= 10
+        start_elevation = -120 
+        elevation_delta = -20
+        angle_fp = "/home/mprabhud/rl/softlearning/possible_ang.p"
+        if path.exists(angle_fp):
+            self.elev_ang = pickle.load(open(angle_fp,"rb"))
+        else:
+            self.elev_ang = []
+            for angle_i in range(num_angles):
+                for elev_i in range(num_elevs): 
+                    self.elev_ang.append((start_elevation + elevation_delta*elev_i,start_angle + angle_delta*angle_i))
         if image_length is not None:
             self.image_length = image_length
         else:
@@ -110,8 +128,9 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             depth_space_shape = np.delete(depth_space_shape, np.argwhere(depth_space_shape == 1))
 
             depth_space = Box(0, float('inf'), depth_space_shape, dtype=np.float32)
-
+            # st()
             spaces['depth_observation'] = depth_space
+            spaces['desired_goal_depth'] = depth_space
 
         if self.cam_angles:
 
@@ -119,6 +138,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             cam_space = Box(float('-inf'), float('inf'), cam_space_shape, dtype=np.float32)
 
             spaces['cam_angles_observation'] = cam_space
+            spaces['goal_cam_angle'] = cam_space
 
         self.return_image_proprio = False
         #TODO: Figure out what's going on here
@@ -149,8 +169,15 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self._last_image = None
 
     def step(self, action):
+        elev_angle = [random.choice(self.elev_ang) for i in range(4)]
+        for i in range(4):
+            elev,azim = elev_angle[i]
+            self.wrapped_env.viewers[i].cam.elevation = elev
+            self.wrapped_env.viewers[i].cam.azimuth = azim
         obs, reward, done, info = self.wrapped_env.step(action)
         new_obs = self._update_obs(obs)
+        imsave("check_01.png",obs["desired_goal_depth"][0])
+        # st()
         if self.recompute_reward:
             reward = self.compute_reward(action, new_obs)
         self._update_info(info, obs)
@@ -176,10 +203,14 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             # This is use mainly for debugging or pre-sampling goals.
             self._img_goal, _ = self._get_img()
         else:
+            # print(np.unique(self._img_goal[0]).shape,np.unique(self._img_goal[1]).shape,np.unique(self._img_goal[2]).shape,np.unique(self._img_goal[3]).shape)
             env_state = self.wrapped_env.get_env_state()
             self.wrapped_env.set_to_goal(self.wrapped_env.get_goal())
-            self._img_goal, _ = self._get_img()
+            self._img_goal, self._img_goal_depth = self._get_img()
+            self.goal_cam_angle = self.wrapped_env.get_camera_angles()
+            # st()
             self.wrapped_env.set_env_state(env_state)
+            # print(np.unique(self._img_goal[0]).shape,np.unique(self._img_goal[1]).shape,np.unique(self._img_goal[2]).shape,np.unique(self._img_goal[3]).shape)
 
         return self._update_obs(obs)
 
@@ -197,6 +228,8 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             obs['cam_angles_observation'] = self.wrapped_env.get_camera_angles()
 
         obs['image_desired_goal'] = self._img_goal
+        obs['desired_goal_depth'] = self._img_goal_depth
+        obs["goal_cam_angle"] = self.goal_cam_angle
         obs['image_achieved_goal'] = img_obs
         obs['observation'] = img_obs
         obs['desired_goal'] = self._img_goal
@@ -212,11 +245,12 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             obs['image_proprio_achieved_goal'] = np.concatenate(
                 (obs['image_achieved_goal'], obs['proprio_achieved_goal'])
             )
-
+        # st()
         return obs
 
 
     def _get_img(self):
+        # st()
         if self.depth:
             image_obs, depths = self._wrapped_env.get_image(
                 width=self.imsize,
@@ -281,6 +315,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
     def set_goal(self, goal):
         ''' Assume goal contains both image_desired_goal and any goals required for wrapped envs'''
+        st()
         self._img_goal = goal['image_desired_goal']
         self.wrapped_env.set_goal(goal)
 
@@ -301,6 +336,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             self.wrapped_env.set_to_goal(goal)
             img_goals[i, :], _ = self._get_img()
         self.wrapped_env.set_env_state(pre_state)
+        st()
         goals['desired_goal'] = img_goals
         goals['image_desired_goal'] = img_goals
         return goals
