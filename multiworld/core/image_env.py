@@ -5,7 +5,7 @@ import numpy as np
 import warnings
 from PIL import Image
 from gym.spaces import Box, Dict
-from scipy.misc import imsave
+#from scipy.misc import imsave
 
 from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.core.wrapper_env import ProxyEnv
@@ -176,7 +176,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             self.wrapped_env.viewers[i].cam.azimuth = azim
         obs, reward, done, info = self.wrapped_env.step(action)
         new_obs = self._update_obs(obs)
-        imsave("check_01.png",obs["desired_goal_depth"][0])
+        #imsave("check_01.png",obs["desired_goal_depth"][0])
         # st()
         if self.recompute_reward:
             reward = self.compute_reward(action, new_obs)
