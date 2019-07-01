@@ -1,10 +1,13 @@
 import numpy as np
-import ipdb
-st = ipdb.set_trace
 import random
 import pickle
-angle_fp = "/home/mprabhud/rl/softlearning/possible_ang.p"
-elev_ang = pickle.load(open(angle_fp,"rb"))
+
+#import ipdb
+#st = ipdb.set_trace
+
+#angle_fp = "/home/mprabhud/rl/softlearning/possible_ang.p"
+#elev_ang = pickle.load(open(angle_fp,"rb"))
+
 
 def create_sawyer_camera_init(
         lookat=(0, 0.85, 0.3),
@@ -221,6 +224,16 @@ def sawyer_init_camera_zoomed_in(camera):
 
 def init_single_camera(camera): 
     sawyer_pick_and_place_camera(camera)
+    elev_ang = []
+    num_angles = 18
+    num_elevs = 3
+    start_angle = 0
+    angle_delta= 10
+    start_elevation = -120 
+    elevation_delta = -20
+    for angle_i in range(num_angles):
+        for elev_i in range(num_elevs): 
+            elev_ang.append((start_elevation + elevation_delta*elev_i,start_angle + angle_delta*angle_i))
     elev,azim  = random.choice(elev_ang)
     camera.elevation = elev
     camera.azimuth = azim

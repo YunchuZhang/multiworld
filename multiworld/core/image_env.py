@@ -11,11 +11,12 @@ from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.core.wrapper_env import ProxyEnv
 from multiworld.envs.env_util import concatenate_box_spaces
 from multiworld.envs.env_util import get_stat_in_paths, create_stats_ordered_dict
-import ipdb
 import os.path as path
 import pickle
 
-st = ipdb.set_trace
+#import ipdb
+#st = ipdb.set_trace
+
 class ImageEnv(ProxyEnv, MultitaskEnv):
     def __init__(
             self,
@@ -315,7 +316,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
     def set_goal(self, goal):
         ''' Assume goal contains both image_desired_goal and any goals required for wrapped envs'''
-        st()
+        #st()
         self._img_goal = goal['image_desired_goal']
         self.wrapped_env.set_goal(goal)
 
@@ -336,7 +337,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             self.wrapped_env.set_to_goal(goal)
             img_goals[i, :], _ = self._get_img()
         self.wrapped_env.set_env_state(pre_state)
-        st()
+        #st()
         goals['desired_goal'] = img_goals
         goals['image_desired_goal'] = img_goals
         return goals
