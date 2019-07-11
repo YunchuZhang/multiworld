@@ -32,7 +32,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             init_hand_xyz=(0, 0.4, 0.07),
 
             reset_free=False,
-            xml_path='sawyer_xyz/sawyer_push_puck.xml',
+            #xml_path='sawyer_xyz/sawyer_push_puck.xml',
+            xml_path='sawyer_xyz/sawyer_push_box.xml',
+
             clamp_puck_on_step=False,
 
             puck_radius=.07,
@@ -81,9 +83,17 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             np.hstack((self.hand_high, puck_high)),
             dtype=np.float32
         )
+        #import pdb; pdb.set_trace()
+
+        self.hand_and_puck_orientation_space = Box(
+            np.hstack((self.hand_low, puck_low, -np.ones(9))),
+            np.hstack((self.hand_high, puck_high, np.ones(9))),
+            dtype=np.float32
+        )
         self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
         self.observation_space = Dict([
             ('observation', self.hand_and_puck_space),
+            ('observation_with_orientation', self.hand_and_puck_orientation_space),
             ('desired_goal', self.hand_and_puck_space),
             ('achieved_goal', self.hand_and_puck_space),
             ('state_observation', self.hand_and_puck_space),
@@ -124,6 +134,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             self._set_puck_xy(curr_puck_pos)
         self._set_goal_marker(self._state_goal)
         ob = self._get_obs()
+        #import pdb; pdb.set_trace()
         reward = self.compute_reward(action, ob)
         info = self._get_info()
         done = False
@@ -132,10 +143,13 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
     def _get_obs(self):
         e = self.get_endeff_pos()
         b = self.get_puck_pos()[:2]
+        o = self.get_puck_orientation()
         flat_obs = np.concatenate((e, b))
+        flat_obs_orientation = np.concatenate((flat_obs, o))
 
         return dict(
             observation=flat_obs,
+            observation_with_orientation=flat_obs_orientation,
             desired_goal=self._state_goal,
             achieved_goal=flat_obs,
             state_observation=flat_obs,
@@ -144,6 +158,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             proprio_observation=flat_obs[:3],
             proprio_desired_goal=self._state_goal[:3],
             proprio_achieved_goal=flat_obs[:3],
+
         )
 
     def _get_info(self):
@@ -200,7 +215,11 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         )
 
     def get_puck_pos(self):
+        #import pdb; pdb.set_trace()
         return self.data.get_body_xpos('puck').copy()
+
+    def get_puck_orientation(self):
+        return self.data.get_body_xmat('puck').flatten().copy()
 
     def sample_puck_xy(self):
         return np.array([0, 0.6])
@@ -427,9 +446,13 @@ class SawyerPushAndReachXYEnv(SawyerPushAndReachXYZEnv):
         hand_and_puck_low[2] = hand_z_position
         hand_and_puck_high = self.hand_and_puck_space.high.copy()
         hand_and_puck_high[2] = hand_z_position
+
         self.hand_and_puck_space = Box(hand_and_puck_low, hand_and_puck_high, dtype=np.float32)
+        self.hand_and_puck_orientation_space  = Box(np.hstack((hand_and_puck_low,-np.ones(9))), np.hstack(( hand_and_puck_high,np.ones(9))),  dtype=np.float32)
+        #import pdb; pdb.set_trace()
         self.observation_space = Dict([
             ('observation', self.hand_and_puck_space),
+            ('observation_with_orientation', self.hand_and_puck_orientation_space),
             ('desired_goal', self.hand_and_puck_space),
             ('achieved_goal', self.hand_and_puck_space),
             ('state_observation', self.hand_and_puck_space),
