@@ -9,8 +9,7 @@
             <geom name="puckbox"
                   type="mesh"
                   mesh = "l7"
-                  pos="0 0 0"
-                  scale="0.1 0.1 0.1"
+                  pos="0 0 0"      
             />
             <site name="puck" pos="0 0 0" size="0.01" />
         </body>
