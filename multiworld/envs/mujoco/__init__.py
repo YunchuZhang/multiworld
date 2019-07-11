@@ -90,6 +90,12 @@ def register_mujoco_envs():
         },
     )
 
+    register(
+        id='SawyerMulticameraReach-v0',
+        entry_point=create_multicamera_reach,
+        tags={}
+    )
+
 
     """
     Pushing Tasks, XY
@@ -162,6 +168,12 @@ def register_mujoco_envs():
             reset_free=False,
             clamp_puck_on_step=True,
         )
+    )
+
+    register(
+        id='SawyerMulticameraPushEasy-v0',
+        entry_point=create_multicamera_push_easy,
+        tags={}
     )
 
     """
@@ -687,3 +699,39 @@ def create_image_48_sawyer_pickup_easy_v0():
         normalize=True,
         presampled_goals=goals,
     )
+
+
+def create_multicamera_reach():
+    from multiworld.core.image_env import ImageEnv
+    from multiworld.envs.mujoco.cameras import init_multiple_cameras
+
+    return ImageEnv(
+        wrapped_env=gym.make('SawyerReachXYEnv-v1', reward_type='hand_success'),
+        imsize=84,
+        normalize=True,
+        init_camera=init_multiple_cameras,
+        num_cameras=4,
+        depth=True,
+        cam_angles=True,
+        reward_type='wrapped_env',
+        flatten=False
+    )
+
+
+def create_multicamera_push_easy():
+    from multiworld.core.image_env import ImageEnv
+    from multiworld.envs.mujoco.cameras import init_multiple_cameras
+
+    return ImageEnv(
+        wrapped_env=gym.make('SawyerPushAndReachEnvEasy-v0', reward_type='puck_success'),
+        imsize=84,
+        normalize=True,
+        init_camera=init_multiple_cameras,
+        num_cameras=4,
+        depth=True,
+        cam_angles=True,
+        reward_type='wrapped_env',
+        flatten=False
+    )
+
+    
