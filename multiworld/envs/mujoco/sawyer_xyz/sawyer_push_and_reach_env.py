@@ -138,7 +138,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         #import pdb; pdb.set_trace()
         #reward = self.compute_reward(action, ob)
         done = False
-        st()
+        # st()
         reward, done = self.compute_reward(action, ob)
         info = self._get_info()
         #done = False
