@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mujoco>
-	<include file="shared_config.xml"></include>
-	<worldbody>
-		<include file="sawyer_xyz_base_pusher.xml"></include>
+  <include file="shared_config.xml"></include>
+  <worldbody>
+    <include file="sawyer_xyz_base_pusher.xml"></include>
         <body name="puck" pos="0 0 .1">
             <joint name="puckjoint" type="free" limited='false' damping="1" armature="0" />
-            <inertial pos="0 0 0" mass=".1" diaginertia=".1 .1 .1"/>
+            <inertial pos="0 0 0" mass="6" diaginertia=".00004 .00003 .00004"/>
             <geom name="puckbox"
                   type="mesh"
-                  mesh = "mug2"
-                  pos="0 0 0"      
+                  mesh = "printer"
+                  pos="0 0 0" 
+                  friction="1 1 .0001" 
+                  rgba=".1 .1 .9 1"    
             />
             <site name="puck" pos="0 0 0" size="0.01" />
         </body>
@@ -18,7 +20,7 @@
               rgba="1 0.5 0.5 0.5"/>
         <site name="puck-goal-site" pos="0 0 0" size="0.01"
               rgba="0.5 0.5 1 0.5"/>
-	</worldbody>
+  </worldbody>
     <actuator>
         <motor joint="right_j0" ctrlrange="-100.0 100.0" ctrllimited="false"/>
         <motor joint="right_j1" ctrlrange="-100.0 100.0" ctrllimited="false"/>
