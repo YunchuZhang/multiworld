@@ -137,7 +137,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         #import pdb; pdb.set_trace()
         #reward = self.compute_reward(action, ob)
         done = False
-        reward, done = self.compute_rewards_done(action, ob)
+        reward, done = self.compute_reward(action, ob)
         info = self._get_info()
         #done = False
         return ob, reward, done, info
@@ -343,7 +343,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             'desired_goal': goals,
             'state_desired_goal': goals,
         }
-
+'''
     def compute_rewards(self, actions, obs):
         achieved_goals = obs['state_achieved_goal']
         desired_goals = obs['state_desired_goal']
@@ -386,8 +386,8 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         else:
             raise NotImplementedError("Invalid/no reward type.")
         return r
-
-    def compute_rewards_done(self, actions, obs):
+'''
+    def compute_rewards(self, actions, obs):
         achieved_goals = obs['state_achieved_goal']
         desired_goals = obs['state_desired_goal']
         hand_pos = achieved_goals[:, :3]
