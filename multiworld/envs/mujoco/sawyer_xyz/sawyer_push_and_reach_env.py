@@ -135,9 +135,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         self._set_goal_marker(self._state_goal)
         ob = self._get_obs()
         #import pdb; pdb.set_trace()
-        #reward = self.compute_reward(action, ob)
+        reward = self.compute_reward(action, ob)
         done = False
-        reward, done = self.compute_rewards(action, ob)
+        #reward, done = self.compute_rewards(action, ob)
         info = self._get_info()
         #done = False
         return ob, reward, done, info
@@ -439,7 +439,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             done = touch_distances < self.indicator_threshold
         else:
             raise NotImplementedError("Invalid/no reward type.")
-        return r, done
+        return r
 
     def get_diagnostics(self, paths, prefix=''):
         statistics = OrderedDict()
