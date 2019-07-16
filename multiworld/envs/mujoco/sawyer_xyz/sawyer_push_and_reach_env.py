@@ -135,9 +135,11 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         self._set_goal_marker(self._state_goal)
         ob = self._get_obs()
         #import pdb; pdb.set_trace()
-        reward = self.compute_reward(action, ob)
-        info = self._get_info()
+        #reward = self.compute_reward(action, ob)
         done = False
+        reward, done = self.compute_rewards_done(action, ob)
+        info = self._get_info()
+        #done = False
         return ob, reward, done, info
 
     def _get_obs(self):
@@ -385,6 +387,60 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             raise NotImplementedError("Invalid/no reward type.")
         return r
 
+    def compute_rewards_done(self, actions, obs):
+        achieved_goals = obs['state_achieved_goal']
+        desired_goals = obs['state_desired_goal']
+        hand_pos = achieved_goals[:, :3]
+        puck_pos = achieved_goals[:, 3:]
+        hand_goals = desired_goals[:, :3]
+        puck_goals = desired_goals[:, 3:]
+
+        hand_distances = np.linalg.norm(hand_goals - hand_pos, ord=self.norm_order, axis=1)
+        puck_distances = np.linalg.norm(puck_goals - puck_pos, ord=self.norm_order, axis=1)
+        puck_zs = self.init_puck_z * np.ones((desired_goals.shape[0], 1))
+        touch_distances = np.linalg.norm(
+            hand_pos - np.hstack((puck_pos, puck_zs)),
+            ord=self.norm_order,
+            axis=1,
+        )
+
+        if self.reward_type == 'hand_distance':
+            r = -hand_distances
+            done = hand_distances<self.indicator_threshold
+        elif self.reward_type == 'hand_success':
+            r = -(hand_distances > self.indicator_threshold).astype(float)
+            done = hand_distances<self.indicator_threshold
+        elif self.reward_type == 'puck_distance':
+            r = -puck_distances
+            done = puck_distances < self.indicator_threshold
+        elif self.reward_type == 'puck_success':
+            r = -(puck_distances > self.indicator_threshold).astype(float)
+            done = puck_distances < self.indicator_threshold
+        elif self.reward_type == 'hand_and_puck_distance':
+            r = -(puck_distances + hand_distances)
+            done = (puck_distances<self.indicator_threshold) and (hand_distances<self.indicator_threshold)
+        elif self.reward_type == 'state_distance':
+            r = -np.linalg.norm(
+                achieved_goals - desired_goals,
+                ord=self.norm_order,
+                axis=1
+            )
+            done = np.linalg.norm(achieved_goals - desired_goals,
+                ord=self.norm_order,
+                axis=1)<self.indicator_threshold
+        elif self.reward_type == 'vectorized_state_distance':
+            r = -np.abs(achieved_goals - desired_goals)
+            done = -r< self.indicator_threshold
+        elif self.reward_type == 'touch_distance':
+            r = -touch_distances
+            done = -r<self.indicator_threshold
+        elif self.reward_type == 'touch_success':
+            r = -(touch_distances > self.indicator_threshold).astype(float)
+            done = touch_distances < self.indicator_threshold
+        else:
+            raise NotImplementedError("Invalid/no reward type.")
+        return r, done
+
     def get_diagnostics(self, paths, prefix=''):
         statistics = OrderedDict()
         for stat_name in [
@@ -473,6 +529,6 @@ if __name__ == '__main__':
     env = SawyerPushAndReachXYEnv(num_resets_before_puck_reset=int(1e6))
     for i in range(1000):
         if i % 100 == 0:
-            env.reset()
+           env.reset()
         env.step([0, 1])
         env.render()
