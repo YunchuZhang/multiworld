@@ -52,7 +52,7 @@ class MultitaskEnv(gym.Env, metaclass=abc.ABCMeta):
         next_obs = {
             k: v[None] for k, v in obs.items()
         }
-        return self.compute_rewards(actions, next_obs)[0]
+        return self.compute_rewards(actions, next_obs)[:2]
 
     def get_diagnostics(self, *args, **kwargs):
         """

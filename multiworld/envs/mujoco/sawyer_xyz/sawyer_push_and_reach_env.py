@@ -1,7 +1,8 @@
 from collections import OrderedDict
 import numpy as np
 from gym.spaces import Box, Dict
-
+import ipdb
+st = ipdb.set_trace
 from multiworld.envs.env_util import get_stat_in_paths, \
     create_stats_ordered_dict, get_asset_full_path
 from multiworld.core.multitask_env import MultitaskEnv
@@ -137,6 +138,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         #import pdb; pdb.set_trace()
         #reward = self.compute_reward(action, ob)
         done = False
+        st()
         reward, done = self.compute_reward(action, ob)
         info = self._get_info()
         #done = False
