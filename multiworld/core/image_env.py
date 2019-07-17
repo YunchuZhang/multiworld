@@ -14,8 +14,8 @@ from multiworld.envs.env_util import get_stat_in_paths, create_stats_ordered_dic
 import os.path as path
 import pickle
 
-#import ipdb
-#st = ipdb.set_trace
+import ipdb
+st = ipdb.set_trace
 
 class ImageEnv(ProxyEnv, MultitaskEnv):
     def __init__(
@@ -170,17 +170,19 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self._last_image = None
 
     def step(self, action):
+        #st()
         elev_angle = [random.choice(self.elev_ang) for i in range(4)]
         for i in range(4):
             elev,azim = elev_angle[i]
             self.wrapped_env.viewers[i].cam.elevation = elev
             self.wrapped_env.viewers[i].cam.azimuth = azim
+        #st()
         obs, reward, done, info = self.wrapped_env.step(action)
         new_obs = self._update_obs(obs)
         #imsave("check_01.png",obs["desired_goal_depth"][0])
         # st()
         if self.recompute_reward:
-            reward = self.compute_reward(action, new_obs)
+            reward,done = self.compute_reward(action, new_obs)
         self._update_info(info, obs)
         return new_obs, reward, done, info
 
