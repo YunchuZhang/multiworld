@@ -16,7 +16,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             puck_low=(-.4, .2),
             puck_high=(.4, 1),
 
-            reward_type='state_distance',
+            reward_type='puck_success',
             norm_order=1,
             indicator_threshold=0.06,
 
@@ -405,7 +405,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             ord=self.norm_order,
             axis=1,
         )
-
+        #print(self.reward_type)
         if self.reward_type == 'hand_distance':
             r = -hand_distances
             done = hand_distances<self.indicator_threshold
