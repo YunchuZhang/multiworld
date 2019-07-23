@@ -298,6 +298,8 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
     def render(self, mode='wrapped'):
         if mode == 'wrapped':
             self.wrapped_env.render()
+        elif mode == 'rgb_array':
+            return self.wrapped_env.render(mode='rgb_array')
         elif mode == 'cv2':
             if self._last_image is None:
                 self._last_image = self._wrapped_env.get_image(

@@ -79,6 +79,7 @@ def init_sawyer_camera_v4(camera):
     camera.azimuth = 270
     camera.trackbodyid = -1
 
+
 def init_sawyer_camera_v5(camera):
     """
     Purposely zoomed out to be hard.
@@ -101,6 +102,7 @@ def sawyer_pick_and_place_camera(camera):
     camera.azimuth = 180
     camera.trackbodyid = 0
 
+
 def sawyer_pick_and_place_camera_zoomed(camera):
     camera.lookat[0] = 0.0
     camera.lookat[1] = .67
@@ -109,7 +111,6 @@ def sawyer_pick_and_place_camera_zoomed(camera):
     camera.elevation = 0
     camera.azimuth = 180
     camera.trackbodyid = 0
-
 
 
 def sawyer_pick_and_place_camera_slanted_angle(camera):
