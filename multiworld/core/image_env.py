@@ -70,20 +70,20 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self.normalize = normalize
         self.recompute_reward = recompute_reward
         self.non_presampled_goal_img_is_garbage = non_presampled_goal_img_is_garbage
-        num_angles = 18
-        num_elevs = 3
+        num_angles = 4
+        num_elevs = 1
         start_angle = 0
-        angle_delta= 10
-        start_elevation = -120 
-        elevation_delta = -20
-        angle_fp = "/home/mprabhud/rl/softlearning/possible_ang.p"
-        if path.exists(angle_fp):
-            self.elev_ang = pickle.load(open(angle_fp,"rb"))
-        else:
-            self.elev_ang = []
-            for angle_i in range(num_angles):
-                for elev_i in range(num_elevs): 
-                    self.elev_ang.append((start_elevation + elevation_delta*elev_i,start_angle + angle_delta*angle_i))
+        angle_delta= 45
+        start_elevation = -180 
+        elevation_delta = 20
+        #angle_fp = "/home/mprabhud/rl/softlearning/possible_ang.p"
+        #if path.exists(angle_fp):
+        #    self.elev_ang = pickle.load(open(angle_fp,"rb"))
+        #else:
+        self.elev_ang = []
+        for angle_i in range(num_angles):
+            for elev_i in range(num_elevs): 
+                self.elev_ang.append((start_elevation + elevation_delta*elev_i,start_angle + angle_delta*angle_i))
         if image_length is not None:
             self.image_length = image_length
         else:
@@ -170,11 +170,11 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self._last_image = None
 
     def step(self, action):
-        elev_angle = [random.choice(self.elev_ang) for i in range(4)]
-        for i in range(4):
-            elev,azim = elev_angle[i]
-            self.wrapped_env.viewers[i].cam.elevation = elev
-            self.wrapped_env.viewers[i].cam.azimuth = azim
+        #elev_angle = random.sample(self.elev_ang, 4)
+        #for i in range(4):
+        #    elev,azim = elev_angle[i]
+        #    self.wrapped_env.viewers[i].cam.elevation = elev
+        #    self.wrapped_env.viewers[i].cam.azimuth = azim
         obs, reward, done, info = self.wrapped_env.step(action)
         new_obs = self._update_obs(obs)
         #imsave("check_01.png",obs["desired_goal_depth"][0])
@@ -193,6 +193,11 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         info['image_success'] = image_success
 
     def reset(self):
+        #elev_angle = random.sample(self.elev_ang, 4)
+        #for i in range(4):
+        #    elev,azim = elev_angle[i]
+        #    self.wrapped_env.viewers[i].cam.elevation = elev
+        #    self.wrapped_env.viewers[i].cam.azimuth = azim
         obs = self.wrapped_env.reset()
         if self.num_goals_presampled > 0:
             goal = self.sample_goal()

@@ -222,24 +222,14 @@ def sawyer_init_camera_zoomed_in(camera):
     camera.trackbodyid = -1
 
 
-def init_single_camera(camera): 
+def init_single_camera(camera, elev=None, azim=None): 
     sawyer_pick_and_place_camera(camera)
-    elev_ang = []
-    num_angles = 18
-    num_elevs = 3
-    start_angle = 0
-    angle_delta= 10
-    start_elevation = -120 
-    elevation_delta = -20
-    for angle_i in range(num_angles):
-        for elev_i in range(num_elevs): 
-            elev_ang.append((start_elevation + elevation_delta*elev_i,start_angle + angle_delta*angle_i))
-    elev,azim  = random.choice(elev_ang)
-    camera.elevation = elev
-    camera.azimuth = azim
+    if elev is not None and azim is not None:
+        camera.elevation = elev
+        camera.azimuth = azim
     # camera.azimuth = angle_range / (n - 1) * i + start_angle
     # camera.azimuth =0
-    print(camera.azimuth,camera.elevation)
+    print(camera.elevation, camera.azimuth)
     # camera.azimuth = angle_range / (n - 1) * i + start_angle
     #print(i)
 
@@ -259,5 +249,16 @@ def init_multiple_cameras(cameras):
     #     for elev_i in range(num_elevs): 
     #         curr_camera = angle_i*num_elevs +elev_i
     #         print(curr_camera,"curr camera")
-    for curr_camera in range(n_cameras):
-        init_single_camera(cameras[curr_camera])
+    elev_ang = []
+    num_angles = 4
+    num_elevs = 1
+    start_angle = 0
+    angle_delta= 60
+    start_elevation = -180 
+    elevation_delta = 20
+    for angle_i in range(num_angles):
+        for elev_i in range(num_elevs): 
+            elev_ang.append((start_elevation + elevation_delta*elev_i, start_angle + angle_delta*angle_i))
+
+    for curr_camera, angles in zip(range(n_cameras), elev_ang[:n_cameras]):
+        init_single_camera(cameras[curr_camera], elev=angles[0], azim=angles[1])
