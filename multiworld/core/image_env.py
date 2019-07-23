@@ -170,7 +170,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self._last_image = None
 
     def step(self, action):
-        elev_angle = [random.choice(self.elev_ang) for i in range(4)]
+        elev_angle = random.sample(self.elev_ang, 4)
         for i in range(4):
             elev,azim = elev_angle[i]
             self.wrapped_env.viewers[i].cam.elevation = elev
@@ -293,6 +293,8 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
     def render(self, mode='wrapped'):
         if mode == 'wrapped':
             self.wrapped_env.render()
+        elif mode == 'rgb_array':
+            return self.wrapped_env.render(mode='rgb_array')
         elif mode == 'cv2':
             if self._last_image is None:
                 self._last_image = self._wrapped_env.get_image(
