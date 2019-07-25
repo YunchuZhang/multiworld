@@ -19,6 +19,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             reward_type='puck_success',
             norm_order=1,
             indicator_threshold=0.06,
+            puck_to_goal_threshold = 0.07,
 
             hand_low=(-0.28, 0.3, 0.05),
             hand_high=(0.28, 0.9, 0.3),
@@ -112,6 +113,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         self.puck_space = Box(self.puck_low, self.puck_high, dtype=np.float32)
         self.clamp_puck_on_step=clamp_puck_on_step
         self.puck_radius=puck_radius
+        self.puck_to_goal_threshold = puck_to_goal_threshold
         self.reset()
 
     def viewer_setup(self):
@@ -226,7 +228,14 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         return self.data.get_body_xmat('puck').flatten().copy()
 
     def sample_puck_xy(self):
-        return np.array([0, 0.6])
+        #return np.array([0, 0.6])
+        init_puck  = np.random.uniform(
+                self.goal_low[3:],
+                self.goal_high[3:],
+                size=self.goal_low[3:].size,
+            )
+        print("init_puck", init_puck)
+        return init_puck
 
     def _set_goal_marker(self, goal):
         """
@@ -285,6 +294,8 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         ob = self.reset_model()
         if self.viewer is not None:
             self.viewer_setup()
+
+        print("reset to ", self.get_puck_pos(), self.get_goal())
         return ob
 
     @property
@@ -321,11 +332,23 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         hand_goal_xy = goal['state_desired_goal'][:2]
         puck_goal_xy = goal['state_desired_goal'][3:]
         dist = np.linalg.norm(hand_goal_xy-puck_goal_xy)
-        while(dist<=self.puck_radius):
+        # while(dist<=self.puck_radius):
+        #     goal = self.sample_goal()
+        #     hand_goal_xy = goal['state_desired_goal'][:2]
+        #     puck_goal_xy = goal['state_desired_goal'][3:]
+        #     dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
+        #in the above implementation the puck_goal can be immediatly next to self.sample_puck_xy() (the initial puck position
+        #which leads to a immediate reward, we want to make sure this doesn't happen)
+        #import pdb; pdb.set_trace()
+        init_puck_pos =  self.get_puck_pos()[:2]
+        puck_goal_dist = np.linalg.norm(init_puck_pos - puck_goal_xy)
+        while(dist<=self.puck_radius) or (puck_goal_dist < self.indicator_threshold):
             goal = self.sample_goal()
             hand_goal_xy = goal['state_desired_goal'][:2]
             puck_goal_xy = goal['state_desired_goal'][3:]
+            puck_goal_dist = np.linalg.norm(init_puck_pos - puck_goal_xy)
             dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
+
         return goal
 
     def sample_goals(self, batch_size):
