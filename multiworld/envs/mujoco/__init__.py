@@ -705,7 +705,7 @@ def create_multicamera_reach():
     from multiworld.core.image_env import ImageEnv
     from multiworld.envs.mujoco.cameras import init_multiple_cameras
 
-    return ImageEnv(
+    env = ImageEnv(
         wrapped_env=gym.make('SawyerReachXYEnv-v1', reward_type='hand_success'),
         imsize=84,
         normalize=True,
@@ -715,6 +715,23 @@ def create_multicamera_reach():
         cam_angles=True,
         reward_type='wrapped_env',
         flatten=False
+    )
+
+    # TODO: fix first goal always being blank without using reset
+    env.reset()
+    goals = env.sample_goals(2)
+    
+    return ImageEnv(
+        wrapped_env=gym.make('SawyerReachXYEnv-v1', reward_type='hand_success'),
+        imsize=84,
+        normalize=True,
+        init_camera=init_multiple_cameras,
+        num_cameras=4,
+        depth=True,
+        cam_angles=True,
+        reward_type='wrapped_env',
+        flatten=False,
+        presampled_goals=goals
     )
 
 
