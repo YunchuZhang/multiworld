@@ -707,11 +707,11 @@ def create_multicamera_reach():
     import os.path
     import numpy as np
 
-    goal_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        'goals/multicamera_reach_2_goals.npy'
-    )
-    goals = np.load(goal_path, allow_pickle=True).item()
+    #goal_path = os.path.join(
+    #    os.path.dirname(os.path.realpath(__file__)),
+    #    'goals/multicamera_reach_2_goals.npy'
+    #)
+    #goals = np.load(goal_path, allow_pickle=True).item()
 
     return ImageEnv(
         wrapped_env=gym.make('SawyerReachXYEnv-v1', reward_type='hand_success'),
@@ -723,7 +723,7 @@ def create_multicamera_reach():
         cam_angles=True,
         reward_type='wrapped_env',
         flatten=False,
-        presampled_goals=goals
+        #presampled_goals=goals
     )
 
 
