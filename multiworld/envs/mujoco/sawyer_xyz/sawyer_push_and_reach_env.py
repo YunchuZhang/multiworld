@@ -228,14 +228,14 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         return self.data.get_body_xmat('puck').flatten().copy()
 
     def sample_puck_xy(self):
-        #return np.array([0, 0.6])
-        init_puck  = np.random.uniform(
-                self.goal_low[3:],
-                self.goal_high[3:],
-                size=self.goal_low[3:].size,
-            )
-        print("init_puck", init_puck)
-        return init_puck
+        return np.array([0, 0.6])
+        # init_puck  = np.random.uniform(
+        #         self.goal_low[3:],
+        #         self.goal_high[3:],
+        #         size=self.goal_low[3:].size,
+        #     )
+        # #print("init_puck", init_puck)
+        # return init_puck
 
     def _set_goal_marker(self, goal):
         """
@@ -295,7 +295,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         if self.viewer is not None:
             self.viewer_setup()
 
-        print("reset to ", self.get_puck_pos(), self.get_goal())
+        #print("reset to ", self.get_puck_pos(), self.get_goal())
         return ob
 
     @property
@@ -329,6 +329,8 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
     def sample_valid_goal(self):
         goal = self.sample_goal()
+         #fix the goal for now
+        goal['state_desired_goal'][3:] = np.array([0.15, 0.7])
         hand_goal_xy = goal['state_desired_goal'][:2]
         puck_goal_xy = goal['state_desired_goal'][3:]
         dist = np.linalg.norm(hand_goal_xy-puck_goal_xy)
