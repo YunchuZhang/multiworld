@@ -330,7 +330,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
     def sample_valid_goal(self):
         goal = self.sample_goal()
          #fix the goal for now
-        goal['state_desired_goal'][3:] = np.array([0.15, 0.7])
+        goal['state_desired_goal'][3:] = np.array([0.0, 0.7])
         hand_goal_xy = goal['state_desired_goal'][:2]
         puck_goal_xy = goal['state_desired_goal'][3:]
         dist = np.linalg.norm(hand_goal_xy-puck_goal_xy)
@@ -344,12 +344,12 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         #import pdb; pdb.set_trace()
         init_puck_pos =  self.get_puck_pos()[:2]
         puck_goal_dist = np.linalg.norm(init_puck_pos - puck_goal_xy)
-        while(dist<=self.puck_radius) or (puck_goal_dist < self.indicator_threshold):
-            goal = self.sample_goal()
-            hand_goal_xy = goal['state_desired_goal'][:2]
-            puck_goal_xy = goal['state_desired_goal'][3:]
-            puck_goal_dist = np.linalg.norm(init_puck_pos - puck_goal_xy)
-            dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
+        # while(dist<=self.puck_radius) or (puck_goal_dist < self.indicator_threshold):
+        #     goal = self.sample_goal()
+        #     hand_goal_xy = goal['state_desired_goal'][:2]
+        #     puck_goal_xy = goal['state_desired_goal'][3:]
+        #     puck_goal_dist = np.linalg.norm(init_puck_pos - puck_goal_xy)
+        #     dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
 
         return goal
 
