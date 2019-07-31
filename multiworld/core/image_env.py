@@ -372,7 +372,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self.wrapped_env.set_env_state(pre_state)
         #st()
         goals['goal_rendering'] = np.array(goal_renderings)
-        goals['desired_goal'] = np.array(img_goals)
+        #goals['desired_goal'] = np.array(img_goals)
         goals['image_desired_goal'] = np.array(img_goals)
         goals['desired_goal_depth'] = np.array(img_goal_depths)
         goals['goal_cam_angle'] = np.array(goal_cam_angles)
