@@ -709,14 +709,13 @@ def create_multicamera_reach():
 
     goal_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
-        'goals/multicamera_reach_2_goals.npy'
+        'goals/multicamera_reach_imsize64_2_goals.npy'
     )
     goals = np.load(goal_path, allow_pickle=True).item()
 
     return ImageEnv(
         wrapped_env=gym.make('SawyerReachXYEnv-v1', reward_type='hand_success'),
-        imsize=84,
-        normalize=True,
+        imsize=64,
         init_camera=init_multiple_cameras,
         num_cameras=4,
         depth=True,
@@ -733,8 +732,7 @@ def create_multicamera_push_easy():
 
     return ImageEnv(
         wrapped_env=gym.make('SawyerPushAndReachEnvEasy-v0', reward_type='puck_success'),
-        imsize=84,
-        normalize=True,
+        imsize=64,
         init_camera=init_multiple_cameras,
         num_cameras=4,
         depth=True,
