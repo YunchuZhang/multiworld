@@ -117,9 +117,9 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
         self._img_goal = img_space.sample() #has to be done for presampling
         spaces = self.wrapped_env.observation_space.spaces.copy()
-        spaces['observation'] = img_space
-        spaces['desired_goal'] = img_space
-        spaces['achieved_goal'] = img_space
+        #spaces['observation'] = img_space
+        #spaces['desired_goal'] = img_space
+        #spaces['achieved_goal'] = img_space
         spaces['image_observation'] = img_space
         spaces['image_desired_goal'] = img_space
         spaces['image_achieved_goal'] = img_space
@@ -192,6 +192,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         info['image_dist'] = image_dist
         info['image_success'] = image_success
 
+
     def reset(self):
         #elev_angle = random.sample(self.elev_ang, 4)
         #for i in range(4):
@@ -201,24 +202,34 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         obs = self.wrapped_env.reset()
         if self.num_goals_presampled > 0:
             goal = self.sample_goal()
+
+            self._goal_rendering = goal['goal_rendering']
+            goal.pop('goal_rendering', None)
             self._img_goal = goal['image_desired_goal']
+            self._img_goal_depth = goal['desired_goal_depth']
+            self.goal_cam_angle = goal['goal_cam_angle']
+
             self.wrapped_env.set_goal(goal)
             for key in goal:
                 obs[key] = goal[key]
+
         elif self.non_presampled_goal_img_is_garbage:
             # This is use mainly for debugging or pre-sampling goals.
             self._img_goal, _ = self._get_img()
         else:
-            # print(np.unique(self._img_goal[0]).shape,np.unique(self._img_goal[1]).shape,np.unique(self._img_goal[2]).shape,np.unique(self._img_goal[3]).shape)
             env_state = self.wrapped_env.get_env_state()
             self.wrapped_env.set_to_goal(self.wrapped_env.get_goal())
+
+            # Goal rendering is used for visualization, image goal is used
+            # for learning/acting
+            self._goal_rendering = self.wrapped_env.render(mode='rgb_array')
             self._img_goal, self._img_goal_depth = self._get_img()
             self.goal_cam_angle = self.wrapped_env.get_camera_angles()
-            # st()
+
             self.wrapped_env.set_env_state(env_state)
-            # print(np.unique(self._img_goal[0]).shape,np.unique(self._img_goal[1]).shape,np.unique(self._img_goal[2]).shape,np.unique(self._img_goal[3]).shape)
 
         return self._update_obs(obs)
+
 
     def _get_obs(self):
         return self._update_obs(self.wrapped_env._get_obs())
@@ -237,9 +248,9 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         obs['desired_goal_depth'] = self._img_goal_depth
         obs["goal_cam_angle"] = self.goal_cam_angle
         obs['image_achieved_goal'] = img_obs
-        obs['observation'] = img_obs
-        obs['desired_goal'] = self._img_goal
-        obs['achieved_goal'] = img_obs
+        #obs['observation'] = img_obs
+        #obs['desired_goal'] = self._img_goal
+        #obs['achieved_goal'] = img_obs
 
         if self.return_image_proprio:
             obs['image_proprio_observation'] = np.concatenate(
@@ -295,11 +306,14 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         return image_obs, None
 
 
-    def render(self, mode='wrapped'):
+    def render(self, mode='wrapped', render_goal=False):
         if mode == 'wrapped':
             self.wrapped_env.render()
         elif mode == 'rgb_array':
-            return self.wrapped_env.render(mode='rgb_array')
+            if render_goal:
+                return self.wrapped_env.render(mode='rgb_array'), self._goal_rendering
+            else:
+                return self.wrapped_env.render(mode='rgb_array')
         elif mode == 'cv2':
             if self._last_image is None:
                 self._last_image = self._wrapped_env.get_image(
@@ -327,6 +341,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self._img_goal = goal['image_desired_goal']
         self.wrapped_env.set_goal(goal)
 
+
     def sample_goals(self, batch_size):
         if self.num_goals_presampled > 0:
             idx = np.random.randint(0, self.num_goals_presampled, batch_size)
@@ -336,18 +351,38 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             return sampled_goals
         if batch_size > 1:
             warnings.warn("Sampling goal images is slow")
-        img_goals = np.zeros((batch_size, self.image_length))
+
+        goal_renderings = []
+        img_goals = []
+        img_goal_depths = []
+        goal_cam_angles = []
+
         goals = self.wrapped_env.sample_goals(batch_size)
         pre_state = self.wrapped_env.get_env_state()
+
         for i in range(batch_size):
             goal = self.unbatchify_dict(goals, i)
             self.wrapped_env.set_to_goal(goal)
-            img_goals[i, :], _ = self._get_img()
+            #img_goals[i, :], _ = self._get_img()
+
+            goal_rendering = self.wrapped_env.render(mode='rgb_array')
+            img_goal, img_goal_depth = self._get_img()
+            goal_cam_angle = self.wrapped_env.get_camera_angles()
+
+            goal_renderings.append(goal_rendering)
+            img_goals.append(img_goal)
+            img_goal_depths.append(img_goal_depth)
+            goal_cam_angles.append(goal_cam_angle)
+
         self.wrapped_env.set_env_state(pre_state)
         #st()
-        goals['desired_goal'] = img_goals
-        goals['image_desired_goal'] = img_goals
+        goals['goal_rendering'] = np.array(goal_renderings)
+        #goals['desired_goal'] = np.array(img_goals)
+        goals['image_desired_goal'] = np.array(img_goals)
+        goals['desired_goal_depth'] = np.array(img_goal_depths)
+        goals['goal_cam_angle'] = np.array(goal_cam_angles)
         return goals
+
 
     def compute_rewards(self, actions, obs):
         achieved_goals = obs['achieved_goal']
