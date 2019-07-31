@@ -117,9 +117,9 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
         self._img_goal = img_space.sample() #has to be done for presampling
         spaces = self.wrapped_env.observation_space.spaces.copy()
-        spaces['observation'] = img_space
-        spaces['desired_goal'] = img_space
-        spaces['achieved_goal'] = img_space
+        #spaces['observation'] = img_space
+        #spaces['desired_goal'] = img_space
+        #spaces['achieved_goal'] = img_space
         spaces['image_observation'] = img_space
         spaces['image_desired_goal'] = img_space
         spaces['image_achieved_goal'] = img_space
@@ -243,9 +243,9 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         obs['desired_goal_depth'] = self._img_goal_depth
         obs["goal_cam_angle"] = self.goal_cam_angle
         obs['image_achieved_goal'] = img_obs
-        obs['observation'] = img_obs
-        obs['desired_goal'] = self._img_goal
-        obs['achieved_goal'] = img_obs
+        #obs['observation'] = img_obs
+        #obs['desired_goal'] = self._img_goal
+        #obs['achieved_goal'] = img_obs
 
         if self.return_image_proprio:
             obs['image_proprio_observation'] = np.concatenate(
