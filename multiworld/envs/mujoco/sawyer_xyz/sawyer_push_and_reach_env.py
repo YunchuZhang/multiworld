@@ -114,7 +114,8 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         self.clamp_puck_on_step=clamp_puck_on_step
         self.puck_radius=puck_radius
         self.puck_to_goal_threshold = puck_to_goal_threshold
-        self.reset(0)
+        self.num =0.4
+        self.reset()
 
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = 0
@@ -267,7 +268,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         qvel[8:15] = 0
         self.set_state(qpos, qvel)
 
-    def reset_model(self, iteration):
+    def reset_model(self):
         self._reset_hand()
         if not self.reset_free:
             self._set_puck_xy(self.sample_puck_xy())
@@ -275,7 +276,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         if not (self.puck_space.contains(self.get_puck_pos()[:2])):
             self._set_puck_xy(self.sample_puck_xy())
 
-        goal = self.sample_valid_goal(iteration)
+        goal = self.sample_valid_goal()
         self.set_goal(goal)
         self.reset_counter += 1
         self.reset_mocap_welds()
@@ -290,8 +291,8 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             self.data.set_mocap_pos('mocap', self.init_hand_xyz.copy())
             self.data.set_mocap_quat('mocap', np.array([1, 0, 1, 0]))
 
-    def reset(self, iteration):
-        ob = self.reset_model(iteration)
+    def reset(self):
+        ob = self.reset_model()
         if self.viewer is not None:
             self.viewer_setup()
 
@@ -327,9 +328,10 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         self._set_puck_xy(puck_goal)
         self.sim.forward()
 
-    def sample_valid_goal(self, iteration):
+    def sample_valid_goal(self):
         goal = self.sample_goal()
          #fix the goal for now
+
         p = np.random.randn(1)
         print("hi yunchu, the random number is:", p)
         # if p > 0:
@@ -338,10 +340,13 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         #     goal['state_desired_goal'][3:] = np.array([0.05, 0.51])
 
         #for the simple case alternate between the two goals
-        if iteration  % 2 == 0:
+        self.num = 1 -self.num
+        if self.num>0.5:
             goal['state_desired_goal'][3:] = np.array([0.0, 0.7])
+            print(self.num, "goal1")
         else:
             goal['state_desired_goal'][3:] = np.array([0.05, 0.51])
+            print(self.num, "goal2")
 
 
         hand_goal_xy = goal['state_desired_goal'][:2]
