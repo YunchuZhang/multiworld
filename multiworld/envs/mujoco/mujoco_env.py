@@ -1,4 +1,5 @@
 import os
+import random
 
 from gym import error, spaces
 from gym.utils import seeding
@@ -142,8 +143,6 @@ class MujocoEnv(gym.Env):
     def _get_viewer(self, mode='human'):
         if self.viewer is None:
             if mode == 'rgb_array':
-                # we set self.viewer as None as a hack to deal with rendering getting
-                # messed up by get_image
                 self.viewer = mujoco_py.MjRenderContextOffscreen(self.sim, device_id=self.device_id)
             else:
                 self.viewer = mujoco_py.MjViewer(self.sim)
@@ -160,7 +159,14 @@ class MujocoEnv(gym.Env):
         ])
 
 
-    def get_image(self, width=84, height=84, camera_name=None, depth=False):
+    def sample_viewers(self, num_views=1):
+        if self.num_cameras == num_views:
+            self.selected_viewers = self.viewers
+        else:
+            self.selected_viewers = random.sample(self.viewers, num_views)
+
+
+    def get_image(self, width=84, height=84, num_views=1, camera_name=None, depth=False):
         if self.num_cameras == 1:
             return self.sim.render(
                 width=width,
@@ -172,21 +178,26 @@ class MujocoEnv(gym.Env):
         if depth:
             depths = []
 
-        for viewer in self.viewers:
+        for viewer in self.selected_viewers:
             # TODO handle camera_name to get camera_id
+
+            # This is a hack to make sure the correct image is
+            # read for every viewer
+            viewer.read_pixels(width, height, depth=True)
             viewer.render(width=width, height=height, camera_id=None)
             if depth:
                 im, d = viewer.read_pixels(width, height, depth=True)
-                images.append(im)
+                images.append(im.copy())
 
                 near = viewer.scn.camera[0].frustum_near
                 far = viewer.scn.camera[0].frustum_far
                 d = far * near / (far - (far - near) * d)
                 d = d/2
-                depths.append(d)
+                #d[d > 5] = 5.0
+                depths.append(d.copy())
             else:
                 im = viewer.read_pixels(width, height, depth=False)
-                images.append(im)
+                images.append(im.copy())
 
         if depth:
             return np.array(images), np.array(depths)
@@ -196,7 +207,7 @@ class MujocoEnv(gym.Env):
 
     def get_camera_angles(self):
         angles = []
-        for viewer in self.viewers:
+        for viewer in self.selected_viewers:
             angles.append([viewer.cam.elevation,
                            viewer.cam.azimuth])
 

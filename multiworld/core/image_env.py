@@ -24,6 +24,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             imsize=84,
             init_camera=None,
             num_cameras=1,
+            num_views=1,
             depth=False,
             cam_angles=False,
             transpose=False,
@@ -62,6 +63,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self.imsize = imsize
         self.init_camera = init_camera
         self.num_cameras = num_cameras
+        self.num_views = num_views
         self.depth = depth
         self.cam_angles = cam_angles
         self.transpose = transpose
@@ -70,20 +72,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self.normalize = normalize
         self.recompute_reward = recompute_reward
         self.non_presampled_goal_img_is_garbage = non_presampled_goal_img_is_garbage
-        num_angles = 18
-        num_elevs = 3
-        start_angle = 0
-        angle_delta= 10
-        start_elevation = -120 
-        elevation_delta = -20
-        angle_fp = "/home/mprabhud/rl/softlearning/possible_ang.p"
-        if path.exists(angle_fp):
-            self.elev_ang = pickle.load(open(angle_fp,"rb"))
-        else:
-            self.elev_ang = []
-            for angle_i in range(num_angles):
-                for elev_i in range(num_elevs): 
-                    self.elev_ang.append((start_elevation + elevation_delta*elev_i,start_angle + angle_delta*angle_i))
+
         if image_length is not None:
             self.image_length = image_length
         else:
@@ -104,10 +93,10 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             # sim.add_render_context(viewer)
 
         if self.flatten:
-            img_space_shape = np.array([self.num_cameras, self.image_length])
+            img_space_shape = np.array([self.num_views, self.image_length])
             img_space_shape = np.delete(img_space_shape, np.argwhere(img_space_shape == 1))
         else:
-            img_space_shape = np.array([self.num_cameras, self.imsize, self.imsize, self.channels])
+            img_space_shape = np.array([self.num_views, self.imsize, self.imsize, self.channels])
             img_space_shape = np.delete(img_space_shape, np.argwhere(img_space_shape == 1))
 
         if self.normalize:
@@ -125,7 +114,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         spaces['image_achieved_goal'] = img_space
 
         if self.depth:
-            depth_space_shape = np.array([self.num_cameras, self.imsize, self.imsize])
+            depth_space_shape = np.array([self.num_views, self.imsize, self.imsize])
             depth_space_shape = np.delete(depth_space_shape, np.argwhere(depth_space_shape == 1))
 
             depth_space = Box(0, float('inf'), depth_space_shape, dtype=np.float32)
@@ -135,7 +124,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
         if self.cam_angles:
 
-            cam_space_shape = (num_cameras, 2)
+            cam_space_shape = (num_views, 2)
             cam_space = Box(float('-inf'), float('inf'), cam_space_shape, dtype=np.float32)
 
             spaces['cam_angles_observation'] = cam_space
@@ -169,12 +158,13 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             self.num_goals_presampled = presampled_goals[random.choice(list(presampled_goals))].shape[0]
         self._last_image = None
 
+        # Fix initial black image problem
+        self.wrapped_env.sample_viewers(num_views=self.num_cameras)
+        self.wrapped_env.reset()
+        self._get_img()
+
     def step(self, action):
-        elev_angle = random.sample(self.elev_ang, 4)
-        for i in range(4):
-            elev,azim = elev_angle[i]
-            self.wrapped_env.viewers[i].cam.elevation = elev
-            self.wrapped_env.viewers[i].cam.azimuth = azim
+        self.wrapped_env.sample_viewers(num_views=self.num_views)
         obs, reward, done, info = self.wrapped_env.step(action)
         new_obs = self._update_obs(obs)
         #imsave("check_01.png",obs["desired_goal_depth"][0])
@@ -194,6 +184,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
 
     def reset(self):
+        self.wrapped_env.sample_viewers(num_views=self.num_views)
         obs = self.wrapped_env.reset()
         if self.num_goals_presampled > 0:
             goal = self.sample_goal()
