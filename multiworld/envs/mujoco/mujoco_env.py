@@ -151,7 +151,11 @@ class MujocoEnv(gym.Env):
             self.sim.data.qpos.flat,
             self.sim.data.qvel.flat
         ])
-
+    def sample_viewers(self, num_views=1):
+        if self.num_cameras == num_views:
+            self.selected_viewers = self.viewers
+        else:
+            self.selected_viewers = random.sample(self.viewers, num_views)
 
     def get_image(self, width=84, height=84, num_views=1, camera_name=None, depth=False):
         if self.num_cameras == 1:
