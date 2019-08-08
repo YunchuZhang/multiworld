@@ -114,6 +114,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         self.clamp_puck_on_step=clamp_puck_on_step
         self.puck_radius=puck_radius
         self.puck_to_goal_threshold = puck_to_goal_threshold
+        self.num =0.4
         self.reset()
 
     def viewer_setup(self):
@@ -330,7 +331,24 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
     def sample_valid_goal(self):
         goal = self.sample_goal()
          #fix the goal for now
-        goal['state_desired_goal'][3:] = np.array([0.0, 0.7])
+
+        p = np.random.randn(1)
+        print("hi yunchu, the random number is:", p)
+        # if p > 0:
+        #     goal['state_desired_goal'][3:] = np.array([0.0, 0.7])
+        # else:
+        #     goal['state_desired_goal'][3:] = np.array([0.05, 0.51])
+
+        #for the simple case alternate between the two goals
+        self.num = 1 -self.num
+        if self.num>0.5:
+            goal['state_desired_goal'][3:] = np.array([0.0, 0.7])
+            print(self.num, "goal1")
+        else:
+            goal['state_desired_goal'][3:] = np.array([0.05, 0.51])
+            print(self.num, "goal2")
+
+
         hand_goal_xy = goal['state_desired_goal'][:2]
         puck_goal_xy = goal['state_desired_goal'][3:]
         dist = np.linalg.norm(hand_goal_xy-puck_goal_xy)

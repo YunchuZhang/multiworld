@@ -5,7 +5,7 @@
         <body name="puck" pos="0 0 .1">
             <joint armature="0" damping="1" limited="false" name="puckjoint" type="free" />
             <inertial diaginertia=".000000001 .0000000009 .0000000017" mass="0.33" pos="0 0 0" />
-            <geom friction="0.008 0.008 .00001" mesh="mug3" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
+            <geom friction="0.008 0.008 .00001" mesh="bowl2" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
             
             <site name="puck" pos="0 0 0" size="0.01" />
         </body>

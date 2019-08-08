@@ -724,10 +724,11 @@ def create_multicamera_push_easy():
 
     return ImageEnv(
         wrapped_env=gym.make('SawyerPushAndReachEnvEasy-v0', reward_type='puck_success'),
-        imsize=84,
-        normalize=True,
+
+        imsize=64,
         init_camera=init_multiple_cameras,
-        num_cameras=4,
+        num_cameras=57,
+        num_views=4,
         depth=True,
         cam_angles=True,
         reward_type='wrapped_env',
