@@ -155,7 +155,11 @@ class MujocoEnv(gym.Env):
         if self.num_cameras == num_views:
             self.selected_viewers = self.viewers
         else:
-            self.selected_viewers = random.sample(self.viewers, num_views)
+
+            #self.selected_viewers = random.sample(self.viewers, num_views)
+            fix_view = [self.viewers[0]]
+            self.selected_viewers = fix_view + random.sample(self.viewers, num_views-1)
+
 
     def get_image(self, width=84, height=84, num_views=1, camera_name=None, depth=False):
         if self.num_cameras == 1:

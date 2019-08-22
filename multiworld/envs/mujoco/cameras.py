@@ -233,6 +233,8 @@ def init_single_camera(camera, elev=None, azim=None):
 
 
 def init_multiple_cameras(cameras, num_elevs=3): 
+
+
     num_cameras = len(cameras)
     elev_ang = []
     num_angles = int(num_cameras / num_elevs)
@@ -246,5 +248,6 @@ def init_multiple_cameras(cameras, num_elevs=3):
             elev_ang.append((start_elevation + elevation_delta*elev_i,
                              start_angle + angle_delta*angle_i))
 
+    #choose the first view
     for curr_camera, angles in enumerate(elev_ang):
         init_single_camera(cameras[curr_camera], elev=angles[0], azim=angles[1])

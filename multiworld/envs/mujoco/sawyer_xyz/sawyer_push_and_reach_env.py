@@ -229,7 +229,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         return self.data.get_body_xmat('puck').flatten().copy()
 
     def sample_puck_xy(self):
-        return np.array([0.25, 0.6])
+        return np.array([0, 0.6])
         # init_puck  = np.random.uniform(
         #         self.goal_low[3:],
         #         self.goal_high[3:],
