@@ -93,7 +93,8 @@ def register_mujoco_envs():
     register(
         id='SawyerMulticameraReach-v0',
         entry_point=create_multicamera_reach,
-        tags={}
+        tags={},
+        kwargs={}
     )
 
 
@@ -701,7 +702,12 @@ def create_image_48_sawyer_pickup_easy_v0():
     )
 
 
-def create_multicamera_reach():
+def create_multicamera_reach(normalize=False,
+                             num_dist=8,
+                             num_azim=18,
+                             num_elevs=5,
+                             num_views=4):
+
     from multiworld.core.image_env import ImageEnv
     from multiworld.envs.mujoco.cameras import init_multiple_cameras
     import os.path
@@ -716,9 +722,15 @@ def create_multicamera_reach():
     return ImageEnv(
         wrapped_env=gym.make('SawyerReachXYEnv-v1', reward_type='hand_success'),
         imsize=64,
-        init_camera=init_multiple_cameras,
-        num_cameras=57,
-        num_views=4,
+        normalize=normalize,
+        num_dist=num_dist,
+        num_azim=num_azim,
+        num_elevs=num_elevs,
+        init_camera=(lambda x: init_multiple_cameras(x,
+                                                     num_dist=num_dist,
+                                                     num_azim=num_azim,
+                                                     num_elevs=num_elevs)),
+        num_views=num_views,
         depth=True,
         cam_angles=True,
         reward_type='wrapped_env',
@@ -727,16 +739,27 @@ def create_multicamera_reach():
     )
 
 
-def create_multicamera_push_easy():
+def create_multicamera_push_easy(normalize=False,
+                                 num_dist=3,
+                                 num_azim=6,
+                                 num_elevs=3,
+                                 num_views=4):
+
     from multiworld.core.image_env import ImageEnv
     from multiworld.envs.mujoco.cameras import init_multiple_cameras
 
     return ImageEnv(
         wrapped_env=gym.make('SawyerPushAndReachEnvEasy-v0', reward_type='puck_success'),
         imsize=64,
-        init_camera=init_multiple_cameras,
-        num_cameras=57,
-        num_views=4,
+        normalize=normalize,
+        num_dist=num_dist,
+        num_azim=num_azim,
+        num_elevs=num_elevs,
+        init_camera=(lambda x: init_multiple_cameras(x,
+                                                     num_dist=num_dist,
+                                                     num_azim=num_azim,
+                                                     num_elevs=num_elevs)),
+        num_views=num_views,
         depth=True,
         cam_angles=True,
         reward_type='wrapped_env',

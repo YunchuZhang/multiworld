@@ -128,7 +128,7 @@ class MujocoEnv(gym.Env):
 
             # we set self.viewer as None as a hack to deal with rendering getting
             # messed up by get_image
-            self.viewer=None
+            self.viewer = None
 
             # original image is upside-down, so flip it
             return data[::-1, :, :]

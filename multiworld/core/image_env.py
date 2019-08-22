@@ -23,7 +23,9 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             wrapped_env,
             imsize=84,
             init_camera=None,
-            num_cameras=1,
+            num_dist=1,
+            num_azim=1,
+            num_elevs=1,
             num_views=1,
             depth=False,
             cam_angles=False,
@@ -62,7 +64,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self.wrapped_env.hide_goal_markers = True
         self.imsize = imsize
         self.init_camera = init_camera
-        self.num_cameras = num_cameras
+        self.num_cameras = num_dist * num_azim * num_elevs
         self.num_views = num_views
         self.depth = depth
         self.cam_angles = cam_angles
