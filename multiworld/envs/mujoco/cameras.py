@@ -235,32 +235,13 @@ def init_single_camera(camera, dist=None, azim=None, elev=None):
     camera.trackbodyid = -1
 
 
-def init_multiple_cameras(cameras,
-                          start_dist=0.7,
-                          end_dist=1.5,
-                          num_dist=3,
-                          start_angle=0,
-                          end_angle=180,
-                          num_azim=4,
-                          start_elev=-180,
-                          end_elev=-90,
-                          num_elevs=3): 
+def init_multiple_cameras(cameras, cam_space):
 
     num_cameras = len(cameras)
-    assert num_cameras == (num_dist * num_azim * num_elevs)
 
-    cam_pos = []
+    dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], num_cameras)
+    angles = np.random.uniform(cam_space['angle_low'], cam_space['angle_high'], num_cameras)
+    elevs = np.random.uniform(cam_space['elev_low'], cam_space['elev_high'], num_cameras)
 
-    dist_delta = (end_dist - start_dist) / num_dist
-    angle_delta = (end_angle - start_angle) / (num_azim - 1)
-    elev_delta = (end_elev - start_elev) / num_elevs
-
-    for dist_i in range(num_dist):
-        for angle_i in range(num_azim):
-            for elev_i in range(num_elevs):
-                cam_pos.append((start_dist + dist_delta * dist_i,
-                                start_angle + angle_delta * angle_i,
-                                start_elev + elev_delta * elev_i))
-
-    for curr_camera, pos in enumerate(cam_pos):
-        init_single_camera(cameras[curr_camera], dist=pos[0], azim=pos[1], elev=pos[2])
+    for i in range(num_cameras):
+        init_single_camera(cameras[i], dist=dists[i], azim=angles[i], elev=elevs[i])
