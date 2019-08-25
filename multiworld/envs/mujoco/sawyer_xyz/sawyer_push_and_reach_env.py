@@ -82,8 +82,16 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             dtype=np.float32
         )
         self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
+
+        self.hand_and_puck_orientation_space = Box(
+            np.hstack((self.hand_low, puck_low, -np.ones(9))),
+            np.hstack((self.hand_high, puck_high, np.ones(9))),
+            dtype=np.float32
+        )
+
         self.observation_space = Dict([
             ('observation', self.hand_and_puck_space),
+            ('observation_with_orientation', self.hand_and_puck_orientation_space),
             ('desired_goal', self.hand_and_puck_space),
             ('achieved_goal', self.hand_and_puck_space),
             ('state_observation', self.hand_and_puck_space),
@@ -133,10 +141,13 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
     def _get_obs(self):
         e = self.get_endeff_pos()
         b = self.get_puck_pos()[:2]
+        o = self.get_puck_orientation()
         flat_obs = np.concatenate((e, b))
+        flat_obs_orientation = np.concatenate((flat_obs, o))
 
         return dict(
             observation=flat_obs,
+            observation_with_orientation=flat_obs_orientation,
             desired_goal=self._state_goal,
             achieved_goal=flat_obs,
             state_observation=flat_obs,
@@ -202,6 +213,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
     def get_puck_pos(self):
         return self.data.get_body_xpos('puck').copy()
+
+    def get_puck_orientation(self):
+        return self.data.get_body_xmat('puck').flatten().copy()
 
     def sample_puck_xy(self):
         return np.array([0.1, 0.6])
@@ -296,21 +310,19 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
     def sample_valid_goal(self):
         goal = self.sample_goal()
-        #fix the goal for now      
-        #p = np.random.randn(1)      
-        #print("hi yunchu, the random number is:", p)        
-        # if p > 0:     
-        #     goal['state_desired_goal'][3:] = np.array([0.0, 0.7])     
-        # else:     
-        #     goal['state_desired_goal'][3:] = np.array([0.05, 0.51])       
-        #for the simple case alternate between the two goals        
-        self.num = 1 -self.num      
-        if self.num>0.5:        
-            goal['state_desired_goal'][3:] = np.array([0.0, 0.7])       
-            print(self.num, "goal1")        
-        else:       
-            goal['state_desired_goal'][3:] = np.array([0.05, 0.51])     
-            print(self.num, "goal2")
+        #fix the goal for now
+        #p = np.random.randn(1)
+        #print("hi yunchu, the random number is:", p)
+        # if p > 0:
+        #     goal['state_desired_goal'][3:] = np.array([0.0, 0.7])
+        # else:
+        #     goal['state_desired_goal'][3:] = np.array([0.05, 0.51])
+        #for the simple case alternate between the two goals
+        self.num = 1 -self.num
+        if self.num>0.5:
+            goal['state_desired_goal'][3:] = np.array([0.0, 0.7])
+        else:
+            goal['state_desired_goal'][3:] = np.array([0.05, 0.51])
 
 
         hand_goal_xy = goal['state_desired_goal'][:2]
@@ -446,8 +458,14 @@ class SawyerPushAndReachXYEnv(SawyerPushAndReachXYZEnv):
         hand_and_puck_high = self.hand_and_puck_space.high.copy()
         hand_and_puck_high[2] = hand_z_position
         self.hand_and_puck_space = Box(hand_and_puck_low, hand_and_puck_high, dtype=np.float32)
+        self.hand_and_puck_orientation_space = Box(
+            np.hstack((hand_and_puck_low, -np.ones(9))),
+            np.hstack((hand_and_puck_high, np.ones(9))),
+            dtype=np.float32
+        )
         self.observation_space = Dict([
             ('observation', self.hand_and_puck_space),
+            ('observation_with_orientation', self.hand_and_puck_orientation_space),
             ('desired_goal', self.hand_and_puck_space),
             ('achieved_goal', self.hand_and_puck_space),
             ('state_observation', self.hand_and_puck_space),
