@@ -1,4 +1,5 @@
 import os
+import random
 
 from gym import error, spaces
 from gym.utils import seeding
@@ -118,11 +119,17 @@ class MujocoEnv(gym.Env):
 
     def render(self, mode='human'):
         if mode == 'rgb_array':
-            self._get_viewer().render()
             # window size used for old mujoco-py:
             width, height = 500, 500
-            width, height = 4000, 4000
-            data = self._get_viewer().read_pixels(width, height, depth=False)
+            #width, height = 4000, 4000
+            viewer = self._get_viewer(mode='rgb_array')
+            viewer.render(width, height, camera_id=None)
+            data = viewer.read_pixels(width, height, depth=False)
+
+            # we set self.viewer as None as a hack to deal with rendering getting
+            # messed up by get_image
+            self.viewer = None
+
             # original image is upside-down, so flip it
             return data[::-1, :, :]
         elif mode == 'human':
@@ -133,9 +140,12 @@ class MujocoEnv(gym.Env):
             self.viewer.finish()
             self.viewer = None
 
-    def _get_viewer(self):
+    def _get_viewer(self, mode='human'):
         if self.viewer is None:
-            self.viewer = mujoco_py.MjViewer(self.sim)
+            if mode == 'rgb_array':
+                self.viewer = mujoco_py.MjRenderContextOffscreen(self.sim, device_id=self.device_id)
+            else:
+                self.viewer = mujoco_py.MjViewer(self.sim)
             self.viewer_setup()
         return self.viewer
 
@@ -147,6 +157,19 @@ class MujocoEnv(gym.Env):
             self.sim.data.qpos.flat,
             self.sim.data.qvel.flat
         ])
+
+
+    def sample_views(self, cam_space):
+        dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], self.num_cameras)
+        angles = np.random.uniform(cam_space['angle_low'], cam_space['angle_high'], self.num_cameras)
+        elevs = np.random.uniform(cam_space['elev_low'], cam_space['elev_high'], self.num_cameras)
+
+        for i, viewer in enumerate(self.viewers):
+            viewer.cam.trackbodyid = 0
+            viewer.cam.distance = dists[i]
+            viewer.cam.azimuth = angles[i]
+            viewer.cam.elevation = elevs[i]
+            viewer.cam.trackbodyid = -1
 
 
     def get_image(self, width=84, height=84, camera_name=None, depth=False):
@@ -163,19 +186,24 @@ class MujocoEnv(gym.Env):
 
         for viewer in self.viewers:
             # TODO handle camera_name to get camera_id
+
+            # This is a hack to make sure the correct image is
+            # read for every viewer
+            viewer.read_pixels(width, height, depth=True)
             viewer.render(width=width, height=height, camera_id=None)
             if depth:
                 im, d = viewer.read_pixels(width, height, depth=True)
-                images.append(im)
+                images.append(im.copy())
 
                 near = viewer.scn.camera[0].frustum_near
                 far = viewer.scn.camera[0].frustum_far
                 d = far * near / (far - (far - near) * d)
                 d = d/2
-                depths.append(d)
+                #d[d > 5] = 5.0
+                depths.append(d.copy())
             else:
                 im = viewer.read_pixels(width, height, depth=False)
-                images.append(im)
+                images.append(im.copy())
 
         if depth:
             return np.array(images), np.array(depths)
@@ -190,6 +218,9 @@ class MujocoEnv(gym.Env):
                            viewer.cam.azimuth])
 
         return np.array(angles)
+
+    def get_camera_distances(self):
+        return np.array([viewer.cam.distance for viewer in self.viewers])
 
 
     def initialize_camera(self, init_fctn, num_cameras=1):

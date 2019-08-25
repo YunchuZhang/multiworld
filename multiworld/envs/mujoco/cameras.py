@@ -79,6 +79,7 @@ def init_sawyer_camera_v4(camera):
     camera.azimuth = 270
     camera.trackbodyid = -1
 
+
 def init_sawyer_camera_v5(camera):
     """
     Purposely zoomed out to be hard.
@@ -101,6 +102,7 @@ def sawyer_pick_and_place_camera(camera):
     camera.azimuth = 180
     camera.trackbodyid = 0
 
+
 def sawyer_pick_and_place_camera_zoomed(camera):
     camera.lookat[0] = 0.0
     camera.lookat[1] = .67
@@ -109,7 +111,6 @@ def sawyer_pick_and_place_camera_zoomed(camera):
     camera.elevation = 0
     camera.azimuth = 180
     camera.trackbodyid = 0
-
 
 
 def sawyer_pick_and_place_camera_slanted_angle(camera):
@@ -222,42 +223,25 @@ def sawyer_init_camera_zoomed_in(camera):
     camera.trackbodyid = -1
 
 
-def init_single_camera(camera): 
+def init_single_camera(camera, dist=None, azim=None, elev=None): 
     sawyer_pick_and_place_camera(camera)
-    elev_ang = []
-    num_angles = 18
-    num_elevs = 3
-    start_angle = 0
-    angle_delta= 10
-    start_elevation = -120 
-    elevation_delta = -20
-    for angle_i in range(num_angles):
-        for elev_i in range(num_elevs): 
-            elev_ang.append((start_elevation + elevation_delta*elev_i,start_angle + angle_delta*angle_i))
-    elev,azim  = random.choice(elev_ang)
-    camera.elevation = elev
-    camera.azimuth = azim
-    # camera.azimuth = angle_range / (n - 1) * i + start_angle
-    # camera.azimuth =0
-    print(camera.azimuth,camera.elevation)
-    # camera.azimuth = angle_range / (n - 1) * i + start_angle
-    #print(i)
+    camera.trackbodyid = 0
+    if dist is not None:
+        camera.distance = dist
+    if elev is not None:
+        camera.elevation = elev
+    if azim is not None:
+        camera.azimuth = azim
+    camera.trackbodyid = -1
 
 
-def init_multiple_cameras(cameras): 
-    n_cameras = len(cameras)
-    print("number of cameras ",n_cameras)
-    # st()
-    # if n_cameras==4:
-    #     num_angles = 4
-    #     num_elevs = 1
-    # # ideally
-    # else:
-    #     num_angles = 18
-    #     num_elevs = 3
-    # for angle_i in range(num_angles):
-    #     for elev_i in range(num_elevs): 
-    #         curr_camera = angle_i*num_elevs +elev_i
-    #         print(curr_camera,"curr camera")
-    for curr_camera in range(n_cameras):
-        init_single_camera(cameras[curr_camera])
+def init_multiple_cameras(cameras, cam_space):
+
+    num_cameras = len(cameras)
+
+    dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], num_cameras)
+    angles = np.random.uniform(cam_space['angle_low'], cam_space['angle_high'], num_cameras)
+    elevs = np.random.uniform(cam_space['elev_low'], cam_space['elev_high'], num_cameras)
+
+    for i in range(num_cameras):
+        init_single_camera(cameras[i], dist=dists[i], azim=angles[i], elev=elevs[i])
