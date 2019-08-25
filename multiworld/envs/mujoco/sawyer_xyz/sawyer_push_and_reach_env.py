@@ -15,7 +15,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             puck_low=(-.4, .2),
             puck_high=(.4, 1),
 
-            reward_type='state_distance',
+            reward_type='puck_success',
             norm_order=1,
             indicator_threshold=0.06,
 
@@ -32,7 +32,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             init_hand_xyz=(0, 0.4, 0.07),
 
             reset_free=False,
-            xml_path='sawyer_xyz/sawyer_push_puck.xml',
+            xml_path='sawyer_xyz/sawyer_push_box.xml',
             clamp_puck_on_step=False,
 
             puck_radius=.07,
@@ -101,6 +101,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         self.puck_space = Box(self.puck_low, self.puck_high, dtype=np.float32)
         self.clamp_puck_on_step=clamp_puck_on_step
         self.puck_radius=puck_radius
+        self.num =0.4
         self.reset()
 
     def viewer_setup(self):
@@ -203,7 +204,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         return self.data.get_body_xpos('puck').copy()
 
     def sample_puck_xy(self):
-        return np.array([0, 0.6])
+        return np.array([0.1, 0.6])
 
     def _set_goal_marker(self, goal):
         """
@@ -295,6 +296,23 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
     def sample_valid_goal(self):
         goal = self.sample_goal()
+        #fix the goal for now      
+        #p = np.random.randn(1)      
+        #print("hi yunchu, the random number is:", p)        
+        # if p > 0:     
+        #     goal['state_desired_goal'][3:] = np.array([0.0, 0.7])     
+        # else:     
+        #     goal['state_desired_goal'][3:] = np.array([0.05, 0.51])       
+        #for the simple case alternate between the two goals        
+        self.num = 1 -self.num      
+        if self.num>0.5:        
+            goal['state_desired_goal'][3:] = np.array([0.0, 0.7])       
+            print(self.num, "goal1")        
+        else:       
+            goal['state_desired_goal'][3:] = np.array([0.05, 0.51])     
+            print(self.num, "goal2")
+
+
         hand_goal_xy = goal['state_desired_goal'][:2]
         puck_goal_xy = goal['state_desired_goal'][3:]
         dist = np.linalg.norm(hand_goal_xy-puck_goal_xy)
