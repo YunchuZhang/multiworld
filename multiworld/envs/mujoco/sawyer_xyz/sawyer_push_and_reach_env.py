@@ -90,7 +90,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         )
 
         self.observation_space = Dict([
-            ('observation', self.hand_and_puck_space),
+            # ('observation', self.hand_and_puck_space),
             ('observation_with_orientation', self.hand_and_puck_orientation_space),
             ('desired_goal', self.hand_and_puck_space),
             ('achieved_goal', self.hand_and_puck_space),
@@ -146,7 +146,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         flat_obs_orientation = np.concatenate((flat_obs, o))
 
         return dict(
-            observation=flat_obs,
+            # observation=flat_obs,
             observation_with_orientation=flat_obs_orientation,
             desired_goal=self._state_goal,
             achieved_goal=flat_obs,
@@ -464,7 +464,7 @@ class SawyerPushAndReachXYEnv(SawyerPushAndReachXYZEnv):
             dtype=np.float32
         )
         self.observation_space = Dict([
-            ('observation', self.hand_and_puck_space),
+            # ('observation', self.hand_and_puck_space),
             ('observation_with_orientation', self.hand_and_puck_orientation_space),
             ('desired_goal', self.hand_and_puck_space),
             ('achieved_goal', self.hand_and_puck_space),
