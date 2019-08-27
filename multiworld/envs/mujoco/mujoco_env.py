@@ -163,12 +163,28 @@ class MujocoEnv(gym.Env):
         dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], self.num_cameras)
         angles = np.random.uniform(cam_space['angle_low'], cam_space['angle_high'], self.num_cameras)
         elevs = np.random.uniform(cam_space['elev_low'], cam_space['elev_high'], self.num_cameras)
-
-        for i, viewer in enumerate(self.viewers):
+        import ipdb
+        #ipdb.set_trace()
+        if len(self.viewers) ==4:
+            for i, viewer in enumerate(self.viewers):
+                viewer.cam.trackbodyid = 0
+                viewer.cam.distance = dists[i]
+                viewer.cam.azimuth = angles[i]
+                viewer.cam.elevation = elevs[i]
+                viewer.cam.trackbodyid = -1
+        else:
+            # ele -90 azim 0 top view
+            for i, viewer in enumerate(self.viewers[:4]):
+                viewer.cam.trackbodyid = 0
+                viewer.cam.distance = dists[i]
+                viewer.cam.azimuth = angles[i]
+                viewer.cam.elevation = elevs[i]
+                viewer.cam.trackbodyid = -1
+            viewer = self.viewers[4]
             viewer.cam.trackbodyid = 0
-            viewer.cam.distance = dists[i]
-            viewer.cam.azimuth = angles[i]
-            viewer.cam.elevation = elevs[i]
+            viewer.cam.distance = 1.0
+            viewer.cam.azimuth = 0
+            viewer.cam.elevation = -90
             viewer.cam.trackbodyid = -1
 
 
