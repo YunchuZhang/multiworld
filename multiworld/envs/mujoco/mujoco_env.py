@@ -234,6 +234,17 @@ class MujocoEnv(gym.Env):
 
         return np.array(images)
 
+    def get_camera_info(self):
+        camera_info = []
+        for viewer in self.selected_viewers:
+            camera_info.append([viewer.cam.elevation,
+                                viewer.cam.azimuth,
+                                viewer.cam.distance,
+                                viewer.cam.lookat[0],
+                                viewer.cam.lookat[1],
+                                viewer.cam.lookat[2]])
+
+        return np.array(camera_info)
 
     def get_camera_angles(self):
         angles = []

@@ -85,7 +85,6 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             np.hstack((self.hand_high, puck_high)),
             dtype=np.float32
         )
-        #import pdb; pdb.set_trace()
 
         self.hand_and_puck_orientation_space = Box(
             np.hstack((self.hand_low, puck_low, -np.ones(9))),
@@ -114,7 +113,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         self.clamp_puck_on_step=clamp_puck_on_step
         self.puck_radius=puck_radius
         self.puck_to_goal_threshold = puck_to_goal_threshold
-        self.num =0.4
+        # self.num = 0.4  # Not using two goals.
         self.reset()
 
     def viewer_setup(self):
@@ -138,13 +137,10 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             self._set_puck_xy(curr_puck_pos)
         self._set_goal_marker(self._state_goal)
         ob = self._get_obs()
-        #import pdb; pdb.set_trace()
-        #reward = self.compute_reward(action, ob)
-        done = False
-        # st()
+        # reward = self.compute_reward(action, ob)
+        # done = False
         reward, done = self.compute_reward(action, ob)
         info = self._get_info()
-        #done = False
         return ob, reward, done, info
 
     def _get_obs(self):
@@ -229,14 +225,13 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         return self.data.get_body_xmat('puck').flatten().copy()
 
     def sample_puck_xy(self):
-        return np.array([0, 0.6])
-        # init_puck  = np.random.uniform(
-        #         self.goal_low[3:],
-        #         self.goal_high[3:],
-        #         size=self.goal_low[3:].size,
-        #     )
-        # #print("init_puck", init_puck)
-        # return init_puck
+        # return np.array([0, 0.6])
+        init_puck  = np.random.uniform(
+                self.goal_low[3:],
+                self.goal_high[3:],
+                size=self.goal_low[3:].size,
+            )
+        return init_puck
 
     def _set_goal_marker(self, goal):
         """
@@ -296,7 +291,6 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         if self.viewer is not None:
             self.viewer_setup()
 
-        #print("reset to ", self.get_puck_pos(), self.get_goal())
         return ob
 
     @property
@@ -330,44 +324,22 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
     def sample_valid_goal(self):
         goal = self.sample_goal()
-         #fix the goal for now
-
-        p = np.random.randn(1)
-        print("hi yunchu, the random number is:", p)
-        # if p > 0:
+        # for the simple case alternate between the two goals
+        # self.num = 1 -self.num
+        # if self.num>0.5:
         #     goal['state_desired_goal'][3:] = np.array([0.0, 0.7])
+        #     print(self.num, "goal1")
         # else:
         #     goal['state_desired_goal'][3:] = np.array([0.05, 0.51])
-
-        #for the simple case alternate between the two goals
-        self.num = 1 -self.num
-        if self.num>0.5:
-            goal['state_desired_goal'][3:] = np.array([0.0, 0.7])
-            print(self.num, "goal1")
-        else:
-            goal['state_desired_goal'][3:] = np.array([0.05, 0.51])
-            print(self.num, "goal2")
-
-
+        #     print(self.num, "goal2")
         hand_goal_xy = goal['state_desired_goal'][:2]
         puck_goal_xy = goal['state_desired_goal'][3:]
         dist = np.linalg.norm(hand_goal_xy-puck_goal_xy)
-        # while(dist<=self.puck_radius):
-        #     goal = self.sample_goal()
-        #     hand_goal_xy = goal['state_desired_goal'][:2]
-        #     puck_goal_xy = goal['state_desired_goal'][3:]
-        #     dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
-        #in the above implementation the puck_goal can be immediatly next to self.sample_puck_xy() (the initial puck position
-        #which leads to a immediate reward, we want to make sure this doesn't happen)
-        #import pdb; pdb.set_trace()
-        init_puck_pos =  self.get_puck_pos()[:2]
-        puck_goal_dist = np.linalg.norm(init_puck_pos - puck_goal_xy)
-        # while(dist<=self.puck_radius) or (puck_goal_dist < self.indicator_threshold):
-        #     goal = self.sample_goal()
-        #     hand_goal_xy = goal['state_desired_goal'][:2]
-        #     puck_goal_xy = goal['state_desired_goal'][3:]
-        #     puck_goal_dist = np.linalg.norm(init_puck_pos - puck_goal_xy)
-        #     dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
+        while(dist<=self.puck_radius):
+            goal = self.sample_goal()
+            hand_goal_xy = goal['state_desired_goal'][:2]
+            puck_goal_xy = goal['state_desired_goal'][3:]
+            dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
 
         return goal
 
@@ -389,49 +361,6 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             'state_desired_goal': goals,
         }
 
-    # def compute_rewards(self, actions, obs):
-    #     achieved_goals = obs['state_achieved_goal']
-    #     desired_goals = obs['state_desired_goal']
-    #     hand_pos = achieved_goals[:, :3]
-    #     puck_pos = achieved_goals[:, 3:]
-    #     hand_goals = desired_goals[:, :3]
-    #     puck_goals = desired_goals[:, 3:]
-
-    #     hand_distances = np.linalg.norm(hand_goals - hand_pos, ord=self.norm_order, axis=1)
-    #     puck_distances = np.linalg.norm(puck_goals - puck_pos, ord=self.norm_order, axis=1)
-    #     puck_zs = self.init_puck_z * np.ones((desired_goals.shape[0], 1))
-    #     touch_distances = np.linalg.norm(
-    #         hand_pos - np.hstack((puck_pos, puck_zs)),
-    #         ord=self.norm_order,
-    #         axis=1,
-    #     )
-
-    #     if self.reward_type == 'hand_distance':
-    #         r = -hand_distances
-    #     elif self.reward_type == 'hand_success':
-    #         r = -(hand_distances > self.indicator_threshold).astype(float)
-    #     elif self.reward_type == 'puck_distance':
-    #         r = -puck_distances
-    #     elif self.reward_type == 'puck_success':
-    #         r = -(puck_distances > self.indicator_threshold).astype(float)
-    #     elif self.reward_type == 'hand_and_puck_distance':
-    #         r = -(puck_distances + hand_distances)
-    #     elif self.reward_type == 'state_distance':
-    #         r = -np.linalg.norm(
-    #             achieved_goals - desired_goals,
-    #             ord=self.norm_order,
-    #             axis=1
-    #         )
-    #     elif self.reward_type == 'vectorized_state_distance':
-    #         r = -np.abs(achieved_goals - desired_goals)
-    #     elif self.reward_type == 'touch_distance':
-    #         r = -touch_distances
-    #     elif self.reward_type == 'touch_success':
-    #         r = -(touch_distances > self.indicator_threshold).astype(float)
-    #     else:
-    #         raise NotImplementedError("Invalid/no reward type.")
-    #     return r
-
     def compute_rewards(self, actions, obs):
         achieved_goals = obs['state_achieved_goal']
         desired_goals = obs['state_desired_goal']
@@ -448,7 +377,6 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             ord=self.norm_order,
             axis=1,
         )
-        #print(self.reward_type)
         if self.reward_type == 'hand_distance':
             r = -hand_distances
             done = hand_distances<self.indicator_threshold
@@ -550,7 +478,6 @@ class SawyerPushAndReachXYEnv(SawyerPushAndReachXYZEnv):
 
         self.hand_and_puck_space = Box(hand_and_puck_low, hand_and_puck_high, dtype=np.float32)
         self.hand_and_puck_orientation_space  = Box(np.hstack((hand_and_puck_low,-np.ones(9))), np.hstack(( hand_and_puck_high,np.ones(9))),  dtype=np.float32)
-        #import pdb; pdb.set_trace()
         self.observation_space = Dict([
             #('observation', self.hand_and_puck_space),
             ('observation_with_orientation', self.hand_and_puck_orientation_space),
