@@ -93,7 +93,8 @@ def register_mujoco_envs():
     register(
         id='SawyerMulticameraReach-v0',
         entry_point=create_multicamera_reach,
-        tags={}
+        tags={},
+        kwargs={}
     )
 
 
@@ -701,24 +702,50 @@ def create_image_48_sawyer_pickup_easy_v0():
     )
 
 
-def create_multicamera_reach():
+def create_multicamera_reach(normalize=False,
+                             camera_space={'dist_low': 0.7,
+                                           'dist_high': 1.5,
+                                           'angle_low': 0,
+                                           'angle_high': 180,
+                                           'elev_low': -180,
+                                           'elev_high': -90},
+                             num_cameras=4):
+
     from multiworld.core.image_env import ImageEnv
     from multiworld.envs.mujoco.cameras import init_multiple_cameras
+    import os.path
+    import numpy as np
+
+    #goal_path = os.path.join(
+    #    os.path.dirname(os.path.realpath(__file__)),
+    #    'goals/multicamera_reach_2_goals.npy'
+    #)
+    #goals = np.load(goal_path, allow_pickle=True).item()
 
     return ImageEnv(
         wrapped_env=gym.make('SawyerReachXYEnv-v1', reward_type='hand_success'),
-        imsize=84,
-        normalize=True,
-        init_camera=init_multiple_cameras,
-        num_cameras=4,
+        imsize=64,
+        normalize=normalize,
+        camera_space=camera_space,
+        init_camera=(lambda x: init_multiple_cameras(x, camera_space)),
+        num_cameras=num_cameras,
         depth=True,
-        cam_angles=True,
+        cam_info=True,
         reward_type='wrapped_env',
-        flatten=False
+        flatten=False,
+        #presampled_goals=goals
     )
 
 
-def create_multicamera_push_easy():
+def create_multicamera_push_easy(normalize=False,
+                                 camera_space={'dist_low': 0.7,
+                                               'dist_high': 1.5,
+                                               'angle_low': 0,
+                                               'angle_high': 180,
+                                               'elev_low': -180,
+                                               'elev_high': -90},
+                                 num_cameras=4):
+
     from multiworld.core.image_env import ImageEnv
     from multiworld.envs.mujoco.cameras import init_multiple_cameras
 
@@ -726,11 +753,13 @@ def create_multicamera_push_easy():
         wrapped_env=gym.make('SawyerPushAndReachEnvEasy-v0', reward_type='puck_success'),
 
         imsize=64,
-        init_camera=init_multiple_cameras,
-        num_cameras=57,
-        num_views=4,
+        normalize=normalize,
+        camera_space=camera_space,
+        init_camera=(lambda x: init_multiple_cameras(x, camera_space)),
+        num_cameras=num_cameras,
+
         depth=True,
-        cam_angles=True,
+        cam_info=True,
         reward_type='wrapped_env',
         flatten=False
     )

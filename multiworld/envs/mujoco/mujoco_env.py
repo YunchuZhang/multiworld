@@ -119,11 +119,17 @@ class MujocoEnv(gym.Env):
 
     def render(self, mode='human'):
         if mode == 'rgb_array':
-            self._get_viewer().render()
             # window size used for old mujoco-py:
             width, height = 500, 500
-            width, height = 4000, 4000
-            data = self._get_viewer().read_pixels(width, height, depth=False)
+            #width, height = 4000, 4000
+            viewer = self._get_viewer(mode='rgb_array')
+            viewer.render(width, height, camera_id=None)
+            data = viewer.read_pixels(width, height, depth=False)
+
+            # we set self.viewer as None as a hack to deal with rendering getting
+            # messed up by get_image
+            self.viewer = None
+
             # original image is upside-down, so flip it
             return data[::-1, :, :]
         elif mode == 'human':
@@ -161,7 +167,36 @@ class MujocoEnv(gym.Env):
             self.selected_viewers = fix_view + random.sample(self.viewers, num_views-1)
 
 
-    def get_image(self, width=84, height=84, num_views=1, camera_name=None, depth=False):
+    def sample_views(self, cam_space):
+        dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], self.num_cameras)
+        angles = np.random.uniform(cam_space['angle_low'], cam_space['angle_high'], self.num_cameras)
+        elevs = np.random.uniform(cam_space['elev_low'], cam_space['elev_high'], self.num_cameras)
+        if len(self.viewers) ==4:
+            for i, viewer in enumerate(self.viewers):
+                viewer.cam.trackbodyid = 0
+                viewer.cam.distance = dists[i]
+                viewer.cam.azimuth = angles[i]
+                viewer.cam.elevation = elevs[i]
+                viewer.cam.trackbodyid = -1
+        else:
+            # ele -90 azim 0 top view
+            for i, viewer in enumerate(self.viewers[:4]):
+                viewer.cam.trackbodyid = 0
+                viewer.cam.distance = dists[i]
+                viewer.cam.azimuth = angles[i]
+                viewer.cam.elevation = elevs[i]
+                viewer.cam.trackbodyid = -1
+            viewer = self.viewers[4]
+            viewer.cam.trackbodyid = 0
+            viewer.cam.distance = 1.0
+            viewer.cam.azimuth = 0
+            viewer.cam.elevation = -90
+            viewer.cam.trackbodyid = -1
+
+
+
+    def get_image(self, width=84, height=84, camera_name=None, depth=False):
+
         if self.num_cameras == 1:
             return self.sim.render(
                 width=width,
@@ -207,6 +242,9 @@ class MujocoEnv(gym.Env):
                            viewer.cam.azimuth])
 
         return np.array(angles)
+
+    def get_camera_distances(self):
+        return np.array([viewer.cam.distance for viewer in self.viewers])
 
 
     def initialize_camera(self, init_fctn, num_cameras=1):

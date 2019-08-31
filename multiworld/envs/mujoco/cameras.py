@@ -79,6 +79,7 @@ def init_sawyer_camera_v4(camera):
     camera.azimuth = 270
     camera.trackbodyid = -1
 
+
 def init_sawyer_camera_v5(camera):
     """
     Purposely zoomed out to be hard.
@@ -101,6 +102,7 @@ def sawyer_pick_and_place_camera(camera):
     camera.azimuth = 180
     camera.trackbodyid = 0
 
+
 def sawyer_pick_and_place_camera_zoomed(camera):
     camera.lookat[0] = 0.0
     camera.lookat[1] = .67
@@ -109,7 +111,6 @@ def sawyer_pick_and_place_camera_zoomed(camera):
     camera.elevation = 0
     camera.azimuth = 180
     camera.trackbodyid = 0
-
 
 
 def sawyer_pick_and_place_camera_slanted_angle(camera):
@@ -222,9 +223,13 @@ def sawyer_init_camera_zoomed_in(camera):
     camera.trackbodyid = -1
 
 
-def init_single_camera(camera, elev=None, azim=None): 
+
+def init_single_camera(camera, dist=None, azim=None, elev=None): 
     sawyer_pick_and_place_camera(camera)
     camera.trackbodyid = 0
+    if dist is not None:
+        camera.distance = dist
+
     if elev is not None:
         camera.elevation = elev
     if azim is not None:
@@ -232,22 +237,15 @@ def init_single_camera(camera, elev=None, azim=None):
     camera.trackbodyid = -1
 
 
-def init_multiple_cameras(cameras, num_elevs=3): 
 
+def init_multiple_cameras(cameras, cam_space):
 
     num_cameras = len(cameras)
-    elev_ang = []
-    num_angles = int(num_cameras / num_elevs)
-    start_angle = 0
-    angle_delta = 180 / (num_angles - 1)
-    start_elevation = -180 
-    elevation_delta = 90 / num_elevs
 
-    for angle_i in range(num_angles):
-        for elev_i in range(num_elevs): 
-            elev_ang.append((start_elevation + elevation_delta*elev_i,
-                             start_angle + angle_delta*angle_i))
+    dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], num_cameras)
+    angles = np.random.uniform(cam_space['angle_low'], cam_space['angle_high'], num_cameras)
+    elevs = np.random.uniform(cam_space['elev_low'], cam_space['elev_high'], num_cameras)
 
-    #choose the first view
-    for curr_camera, angles in enumerate(elev_ang):
-        init_single_camera(cameras[curr_camera], elev=angles[0], azim=angles[1])
+    for i in range(num_cameras):
+        init_single_camera(cameras[i], dist=dists[i], azim=angles[i], elev=elevs[i])
+
