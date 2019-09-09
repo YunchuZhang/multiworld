@@ -163,11 +163,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         else:
             self.num_goals_presampled = presampled_goals[random.choice(list(presampled_goals))].shape[0]
         self._last_image = None
-        # Fix initial black image problem
 
-        self.wrapped_env.sample_viewers(num_views=self.num_cameras)
-        self.wrapped_env.reset()
-        self._get_img()
 
         # Fix initial black image problem
         self.wrapped_env.sample_views(self.camera_space)
