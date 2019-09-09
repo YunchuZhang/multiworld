@@ -37,6 +37,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             presampled_goals=None,
             non_presampled_goal_img_is_garbage=False,
             recompute_reward=True,
+            enable_goal_rendering=False,
     ):
         """
 
@@ -72,6 +73,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self.normalize = normalize
         self.recompute_reward = recompute_reward
         self.non_presampled_goal_img_is_garbage = non_presampled_goal_img_is_garbage
+        self.enable_goal_rendering = enable_goal_rendering
 
         if image_length is not None:
             self.image_length = image_length
@@ -197,8 +199,10 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         if self.num_goals_presampled > 0:
             goal = self.sample_goal()
 
-            self._goal_rendering = goal['goal_rendering']
-            goal.pop('goal_rendering', None)
+            if 'goal_rendering' in goal and self.enable_goal_rendering:
+                self._goal_rendering = goal['goal_rendering']
+                goal.pop('goal_rendering', None)
+
             self._img_goal = goal['image_desired_goal']
             self._img_goal_depth = goal['desired_goal_depth']
             self.goal_cam_angle = goal['goal_cam_angle']
@@ -217,7 +221,9 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
             # Goal rendering is used for visualization, image goal is used
             # for learning/acting
-            self._goal_rendering = self.wrapped_env.render(mode='rgb_array')
+            if self.enable_goal_rendering:
+                self._goal_rendering = self.wrapped_env.render(mode='rgb_array')
+
             self._img_goal, self._img_goal_depth = self._get_img()
             self.goal_cam_angle = self.wrapped_env.get_camera_angles()
             self.goal_cam_dist = self.wrapped_env.get_camera_distances()
@@ -350,7 +356,9 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         if batch_size > 1:
             warnings.warn("Sampling goal images is slow")
 
-        goal_renderings = []
+        if self.enable_goal_rendering:
+            goal_renderings = []
+
         img_goals = []
         img_goal_depths = []
         goal_cam_angles = []
@@ -364,12 +372,16 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             self.wrapped_env.set_to_goal(goal)
             #img_goals[i, :], _ = self._get_img()
 
-            goal_rendering = self.wrapped_env.render(mode='rgb_array')
+            if self.enable_goal_rendering:
+                goal_rendering = self.wrapped_env.render(mode='rgb_array')
+
             img_goal, img_goal_depth = self._get_img()
             goal_cam_angle = self.wrapped_env.get_camera_angles()
             goal_cam_dist = self.wrapped_env.get_camera_distances()
 
-            goal_renderings.append(goal_rendering)
+            if self.enable_goal_rendering:
+                goal_renderings.append(goal_rendering)
+
             img_goals.append(img_goal)
             img_goal_depths.append(img_goal_depth)
             goal_cam_angles.append(goal_cam_angle)
