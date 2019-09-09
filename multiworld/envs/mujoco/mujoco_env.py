@@ -208,7 +208,7 @@ class MujocoEnv(gym.Env):
         if depth:
             depths = []
 
-        for viewer in self.selected_viewers:
+        for viewer in self.viewers:
             # TODO handle camera_name to get camera_id
 
             # This is a hack to make sure the correct image is
