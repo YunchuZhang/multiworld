@@ -30,7 +30,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             goal_high=(0.25, 0.875, 0.02, .2, .8),
 
             hide_goal_markers=False,
-            init_puck_z=0.02,
+            init_puck_z=0.001,
             init_hand_xyz=(0, 0.4, 0.07),
 
             reset_free=False,
