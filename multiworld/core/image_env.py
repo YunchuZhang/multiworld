@@ -166,8 +166,8 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         # Fix initial black image problem
 
         self.wrapped_env.sample_viewers(num_views=self.num_cameras)
-        self.wrapped_env.reset()
-        self._get_img()
+        # self.wrapped_env.reset()
+        # self._get_img()
 
         # Fix initial black image problem
         self.wrapped_env.sample_views(self.camera_space)
