@@ -476,7 +476,7 @@ class SawyerPushAndReachXYEnv(SawyerPushAndReachXYZEnv):
         hand_and_puck_high[2] = hand_z_position
 
         self.hand_and_puck_space = Box(hand_and_puck_low, hand_and_puck_high, dtype=np.float32)
-        self.hand_and_puck_orientation_space  = Box(np.hstack((hand_and_puck_low,-np.ones(9))), np.hstack(( hand_and_puck_high,np.ones(9))),  dtype=np.float32)
+        self.hand_and_puck_orientation_space  = Box(np.hstack((hand_and_puck_low,-np.ones(4))), np.hstack(( hand_and_puck_high,np.ones(4))),  dtype=np.float32)
         self.observation_space = Dict([
             #('observation', self.hand_and_puck_space),
             ('observation_with_orientation', self.hand_and_puck_orientation_space),
