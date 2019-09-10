@@ -119,9 +119,9 @@ def register_mujoco_envs():
             hand_high=(0.15, .7, 0.02),
             norm_order=2,
             xml_path='sawyer_xyz/sawyer_push_box.xml',
-            reward_type='state_distance',
+            reward_type='puck_success',
             reset_free=False,
-            clamp_puck_on_step=True,
+            clamp_puck_on_step=False,
         )
     )
 
@@ -764,4 +764,4 @@ def create_multicamera_push_easy(normalize=False,
         flatten=False
     )
 
-    
+

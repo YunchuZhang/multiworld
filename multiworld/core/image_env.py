@@ -59,7 +59,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         """
         self.quick_init(locals())
         super().__init__(wrapped_env)
-        self.wrapped_env.hide_goal_markers = True
+        self.wrapped_env.hide_goal_markers = False
         self.imsize = imsize
         self.init_camera = init_camera
         self.num_cameras = num_cameras

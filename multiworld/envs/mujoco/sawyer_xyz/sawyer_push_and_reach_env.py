@@ -34,7 +34,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             init_hand_xyz=(0, 0.4, 0.07),
 
             reset_free=False,
-            #xml_path='sawyer_xyz/sawyer_push_puck.xml',
+            # xml_path='sawyer_xyz/sawyer_push_puck.xml',
             xml_path='sawyer_xyz/sawyer_push_box.xml',
 
             clamp_puck_on_step=False,
