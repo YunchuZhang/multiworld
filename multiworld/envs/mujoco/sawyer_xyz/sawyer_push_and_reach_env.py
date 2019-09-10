@@ -87,8 +87,8 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         )
 
         self.hand_and_puck_orientation_space = Box(
-            np.hstack((self.hand_low, puck_low, -np.ones(9))),
-            np.hstack((self.hand_high, puck_high, np.ones(9))),
+            np.hstack((self.hand_low, puck_low, -np.ones(4))),
+            np.hstack((self.hand_high, puck_high, np.ones(4))),
             dtype=np.float32
         )
         self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
@@ -221,7 +221,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         return self.data.get_body_xpos('puck').copy()
 
     def get_puck_orientation(self):
-        return self.data.get_body_xmat('puck').flatten().copy()
+        return self.data.get_body_xquat('puck').copy()
 
     def sample_puck_xy(self):
         return np.array([0, 0.6])

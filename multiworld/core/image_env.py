@@ -59,7 +59,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         """
         self.quick_init(locals())
         super().__init__(wrapped_env)
-        self.wrapped_env.hide_goal_markers = False
+        self.wrapped_env.hide_goal_markers = True
         self.imsize = imsize
         self.init_camera = init_camera
         self.num_cameras = num_cameras
@@ -165,7 +165,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self._last_image = None
         # Fix initial black image problem
 
-        self.wrapped_env.sample_viewers(num_views=self.num_cameras)
+        # self.wrapped_env.sample_viewers(num_views=self.num_cameras)
         # self.wrapped_env.reset()
         # self._get_img()
 

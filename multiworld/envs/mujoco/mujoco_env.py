@@ -168,6 +168,8 @@ class MujocoEnv(gym.Env):
 
 
     def sample_views(self, cam_space):
+
+        self.selected_viewers = self.viewers
         dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], self.num_cameras)
         angles = np.random.uniform(cam_space['angle_low'], cam_space['angle_high'], self.num_cameras)
         elevs = np.random.uniform(cam_space['elev_low'], cam_space['elev_high'], self.num_cameras)
