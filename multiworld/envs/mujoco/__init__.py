@@ -111,8 +111,8 @@ def register_mujoco_envs():
             'author': 'murtaza',
         },
         kwargs=dict(
-            goal_low=(-0.15, 0.4, 0.02, -.1, .45),
-            goal_high=(0.15, 0.7, 0.02, .1, .65),
+            goal_low=(-0.15, 0.4, 0.02, -.15, .4), # -.1, .45),
+            goal_high=(0.15, 0.7, 0.02, .15, .7), # .1, .65),
             puck_low=(-.1, .45),
             puck_high=(.1, .65),
             hand_low=(-0.15, 0.4, 0.02),

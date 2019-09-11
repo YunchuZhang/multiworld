@@ -18,7 +18,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
             reward_type='puck_success',
             norm_order=1,
-            indicator_threshold=0.06,
+            indicator_threshold=0.04,
             puck_to_goal_threshold = 0.07,
 
             hand_low=(-0.28, 0.3, 0.05),
@@ -30,7 +30,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
             goal_high=(0.25, 0.875, 0.02, .2, .8),
 
             hide_goal_markers=False,
-            init_puck_z=0.001,
+            init_puck_z=0.01,
             init_hand_xyz=(0, 0.4, 0.07),
 
             reset_free=False,
@@ -333,12 +333,18 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
         #     #print(self.num, "goal2")
         hand_goal_xy = goal['state_desired_goal'][:2]
         puck_goal_xy = goal['state_desired_goal'][3:]
+        puck_xy = self.get_puck_pos()[:2]
         dist = np.linalg.norm(hand_goal_xy-puck_goal_xy)
-        while(dist<=self.puck_radius):
+        dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
+        # step = 0
+        while (dist_to_goal<=3*self.indicator_threshold):
             goal = self.sample_goal()
             hand_goal_xy = goal['state_desired_goal'][:2]
             puck_goal_xy = goal['state_desired_goal'][3:]
             dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
+            dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
+            # step += 1
+            # if step==1000: break
 
         return goal
 
