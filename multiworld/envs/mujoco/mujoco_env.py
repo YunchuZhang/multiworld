@@ -219,8 +219,18 @@ class MujocoEnv(gym.Env):
 
         return np.array(angles)
 
+
     def get_camera_distances(self):
         return np.array([viewer.cam.distance for viewer in self.viewers])
+
+
+    def get_camera_info(self):
+        return np.array([[viewer.cam.elevation,
+                          viewer.cam.azimuth,
+                          viewer.cam.distance,
+                          viewer.cam.lookat[0],
+                          viewer.cam.lookat[1],
+                          viewer.cam.lookat[2]] for viewer in self.viewers])
 
 
     def initialize_camera(self, init_fctn, num_cameras=1):

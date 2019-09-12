@@ -90,9 +90,6 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         # init camera
         if init_camera is not None:
             sim = self._wrapped_env.initialize_camera(init_camera, num_cameras=self.num_cameras)
-            # viewer = mujoco_py.MjRenderContextOffscreen(sim, device_id=-1)
-            # init_camera(viewer.cam)
-            # sim.add_render_context(viewer)
 
         if self.flatten:
             img_space_shape = np.array([self.num_cameras, self.image_length])
@@ -108,9 +105,6 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
         self._img_goal = img_space.sample() #has to be done for presampling
         spaces = self.wrapped_env.observation_space.spaces.copy()
-        #spaces['observation'] = img_space
-        #spaces['desired_goal'] = img_space
-        #spaces['achieved_goal'] = img_space
         spaces['image_observation'] = img_space
         spaces['image_desired_goal'] = img_space
         spaces['image_achieved_goal'] = img_space
@@ -122,21 +116,15 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             depth_space = Box(0, float('inf'), depth_space_shape, dtype=np.float32)
             # st()
             spaces['depth_observation'] = depth_space
-            spaces['desired_goal_depth'] = depth_space
+            spaces['depth_desired_goal'] = depth_space
 
         if self.cam_info:
 
-            cam_angle_space_shape = (num_cameras, 2)
-            cam_angle_space = Box(float('-inf'), float('inf'), cam_angle_space_shape, dtype=np.float32)
-
-            cam_dist_space_shape = (num_cameras,)
-            cam_dist_space = Box(float('-inf'), float('inf'), cam_dist_space_shape, dtype=np.float32)
-
-            spaces['cam_angles_observation'] = cam_angle_space
-            spaces['goal_cam_angle'] = cam_angle_space
-
-            spaces['cam_dist_observation'] = cam_dist_space
-            spaces['goal_cam_dist'] = cam_dist_space
+            # Camera information : Elevation, Azimuth, Distance, Look at point xyz
+            cam_space_shape = (num_cameras, 6)
+            cam_space = Box(float('-inf'), float('inf'), cam_space_shape, dtype=np.float32)
+            spaces['cam_info_observation'] = cam_space
+            spaces['cam_info_goal'] = cam_space
 
         self.return_image_proprio = False
         #TODO: Figure out what's going on here
@@ -204,9 +192,8 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
                 goal.pop('goal_rendering', None)
 
             self._img_goal = goal['image_desired_goal']
-            self._img_goal_depth = goal['desired_goal_depth']
-            self.goal_cam_angle = goal['goal_cam_angle']
-            self.goal_cam_dist = goal['goal_cam_dist']
+            self._img_goal_depth = goal['depth_desired_goal']
+            self.goal_cam_info = goal['cam_info_goal']
 
             self.wrapped_env.set_goal(goal)
             for key in goal:
@@ -225,8 +212,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
                 self._goal_rendering = self.wrapped_env.render(mode='rgb_array')
 
             self._img_goal, self._img_goal_depth = self._get_img()
-            self.goal_cam_angle = self.wrapped_env.get_camera_angles()
-            self.goal_cam_dist = self.wrapped_env.get_camera_distances()
+            self.goal_cam_info = self.wrapped_env.get_camera_info()
 
             self.wrapped_env.set_env_state(env_state)
 
@@ -244,17 +230,12 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             obs['depth_observation'] = depths
 
         if self.cam_info:
-            obs['cam_angles_observation'] = self.wrapped_env.get_camera_angles()
-            obs['cam_dist_observation'] = self.wrapped_env.get_camera_distances()
+            obs['cam_info_observation'] = self.wrapped_env.get_camera_info()
 
         obs['image_desired_goal'] = self._img_goal
-        obs['desired_goal_depth'] = self._img_goal_depth
-        obs['goal_cam_angle'] = self.goal_cam_angle
-        obs['goal_cam_dist'] = self.goal_cam_dist
         obs['image_achieved_goal'] = img_obs
-        #obs['observation'] = img_obs
-        #obs['desired_goal'] = self._img_goal
-        #obs['achieved_goal'] = img_obs
+        obs['depth_desired_goal'] = self._img_goal_depth
+        obs['cam_info_goal'] = self.goal_cam_info
 
         if self.return_image_proprio:
             obs['image_proprio_observation'] = np.concatenate(
@@ -266,12 +247,10 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             obs['image_proprio_achieved_goal'] = np.concatenate(
                 (obs['image_achieved_goal'], obs['proprio_achieved_goal'])
             )
-        # st()
         return obs
 
 
     def _get_img(self):
-        # st()
         if self.depth:
             image_obs, depths = self._wrapped_env.get_image(
                 width=self.imsize,
@@ -335,13 +314,11 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
     """
     def get_goal(self):
         goal = self.wrapped_env.get_goal()
-        #goal['desired_goal'] = self._img_goal
         goal['image_desired_goal'] = self._img_goal
         return goal
 
     def set_goal(self, goal):
         ''' Assume goal contains both image_desired_goal and any goals required for wrapped envs'''
-        #st()
         self._img_goal = goal['image_desired_goal']
         self.wrapped_env.set_goal(goal)
 
@@ -361,8 +338,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
         img_goals = []
         img_goal_depths = []
-        goal_cam_angles = []
-        goal_cam_dists = []
+        goal_cam_infos = []
 
         goals = self.wrapped_env.sample_goals(batch_size)
         pre_state = self.wrapped_env.get_env_state()
@@ -370,31 +346,25 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         for i in range(batch_size):
             goal = self.unbatchify_dict(goals, i)
             self.wrapped_env.set_to_goal(goal)
-            #img_goals[i, :], _ = self._get_img()
 
             if self.enable_goal_rendering:
                 goal_rendering = self.wrapped_env.render(mode='rgb_array')
 
             img_goal, img_goal_depth = self._get_img()
-            goal_cam_angle = self.wrapped_env.get_camera_angles()
-            goal_cam_dist = self.wrapped_env.get_camera_distances()
+            goal_cam_info = self.wrapped_env.get_camera_info()
 
             if self.enable_goal_rendering:
                 goal_renderings.append(goal_rendering)
 
             img_goals.append(img_goal)
             img_goal_depths.append(img_goal_depth)
-            goal_cam_angles.append(goal_cam_angle)
-            goal_cam_dists.append(goal_cam_dist)
+            goal_cam_infos.append(goal_cam_info)
 
         self.wrapped_env.set_env_state(pre_state)
-        #st()
         goals['goal_rendering'] = np.array(goal_renderings)
-        #goals['desired_goal'] = np.array(img_goals)
         goals['image_desired_goal'] = np.array(img_goals)
-        goals['desired_goal_depth'] = np.array(img_goal_depths)
-        goals['goal_cam_angle'] = np.array(goal_cam_angles)
-        goals['goal_cam_dist'] = np.array(goal_cam_dist)
+        goals['depth_desired_goal'] = np.array(img_goal_depths)
+        goals['cam_info_goal'] = np.array(goal_cam_infos)
         return goals
 
 
@@ -410,6 +380,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             return self.wrapped_env.compute_rewards(actions, obs)
         else:
             raise NotImplementedError()
+
 
     def get_diagnostics(self, paths, **kwargs):
         statistics = self.wrapped_env.get_diagnostics(paths, **kwargs)
