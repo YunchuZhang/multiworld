@@ -26,6 +26,22 @@ Usage:
         <mesh name="l4" file="l4.stl" />
         <mesh name="l5" file="l5.stl" />
         <mesh name="l6" file="l6.stl" />
+        <mesh name="l7" file="cap.stl" />
+        <mesh name="boat" file="boat.stl" />
+        <mesh name="bowl1" file="bowl1.stl" />
+        <mesh name="bowl2" file="bowl2.stl" />
+        <mesh name="box1" file="box1.stl" />
+        <mesh name="can1" file="can1.stl" />
+        <mesh name="car1" file="car1.stl" />
+        <mesh name="car2" file="car2.stl" />
+        <mesh name="car3" file="car3.stl" />
+        <mesh name="car4" file="car4.stl" />
+        <mesh name="hat1" file="hat1.stl" />
+        <mesh name="hat2" file="hat2.stl" />
+        <mesh name="mug1" file="mug1.stl" />
+        <mesh name="mug2" file="mug2.stl" />
+        <mesh name="mug3" file="mug3.stl" />
+        <mesh name="printer" file="printer.stl" />        
     </asset>
 
     <visual>

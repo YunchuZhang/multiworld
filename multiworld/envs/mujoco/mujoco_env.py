@@ -36,8 +36,9 @@ class MujocoEnv(gym.Env):
         self.model = mujoco_py.load_model_from_path(fullpath)
         self.sim = mujoco_py.MjSim(self.model)
         self.data = self.sim.data
-        self.viewer = None
 
+        self.camera_init_fctn = None
+        self.viewer = None
         self.num_cameras = None
         self.viewers = []
 
@@ -235,6 +236,7 @@ class MujocoEnv(gym.Env):
 
     def initialize_camera(self, init_fctn, num_cameras=1):
         self.num_cameras = num_cameras
+        self.camera_init_fctn = init_fctn
         sim = self.sim
         cameras = []
         for i in range(self.num_cameras):

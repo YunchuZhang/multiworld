@@ -103,6 +103,40 @@ def register_mujoco_envs():
     """
 
     register(
+        id='SawyerPushRandomObjects-v0',
+        entry_point='multiworld.envs.mujoco.sawyer_xyz'
+                    '.sawyer_push_rand_object:SawyerPushAndReachXYRandObjectEnv',
+        kwargs=dict(
+            goal_low=(-0.15, 0.4, 0.02, -.1, .45),
+            goal_high=(0.15, 0.7, 0.02, .1, .65),
+            puck_low=(-.1, .45),
+            puck_high=(.1, .65),
+            hand_low=(-0.15, 0.4, 0.02),
+            hand_high=(0.15, .7, 0.02),
+            norm_order=2,
+            reward_type='state_distance',
+            reset_free=False,
+            clamp_puck_on_step=True,
+            xml_paths=['sawyer_xyz/sawyer_push_puck.xml',
+                       'sawyer_xyz/sawyer_push_boat.xml',
+                       'sawyer_xyz/sawyer_push_bowl1.xml',
+                       'sawyer_xyz/sawyer_push_bowl2.xml',
+                       'sawyer_xyz/sawyer_push_can1.xml',
+                       'sawyer_xyz/sawyer_push_car1.xml',
+                       'sawyer_xyz/sawyer_push_car2.xml',
+                       'sawyer_xyz/sawyer_push_car3.xml',
+                       'sawyer_xyz/sawyer_push_car4.xml',
+                       'sawyer_xyz/sawyer_push_hat1.xml',
+                       'sawyer_xyz/sawyer_push_hat2.xml',
+                       'sawyer_xyz/sawyer_push_mug1.xml',
+                       'sawyer_xyz/sawyer_push_mug2.xml',
+                       'sawyer_xyz/sawyer_push_mug3.xml',
+                       'sawyer_xyz/sawyer_push_printer.xml',
+            ]
+        )
+    )
+
+    register(
         id='SawyerPushAndReachEnvEasy-v0',
         entry_point='multiworld.envs.mujoco.sawyer_xyz'
                     '.sawyer_push_and_reach_env:SawyerPushAndReachXYEnv',
@@ -174,6 +208,12 @@ def register_mujoco_envs():
     register(
         id='SawyerMulticameraPushEasy-v0',
         entry_point=create_multicamera_push_easy,
+        tags={}
+    )
+
+    register(
+        id='SawyerMulticameraPushRandomObjects-v0',
+        entry_point=create_multicamera_push_random_objects,
         tags={}
     )
 
@@ -762,4 +802,29 @@ def create_multicamera_push_easy(normalize=False,
         flatten=False
     )
 
-    
+
+
+def create_multicamera_push_random_objects(normalize=False,
+                                 camera_space={'dist_low': 0.7,
+                                               'dist_high': 1.5,
+                                               'angle_low': 0,
+                                               'angle_high': 180,
+                                               'elev_low': -180,
+                                               'elev_high': -90},
+                                 num_cameras=4):
+
+    from multiworld.core.image_env import ImageEnv
+    from multiworld.envs.mujoco.cameras import init_multiple_cameras
+
+    return ImageEnv(
+        wrapped_env=gym.make('SawyerPushRandomObjects-v0', reward_type='puck_success'),
+        imsize=64,
+        normalize=normalize,
+        camera_space=camera_space,
+        init_camera=(lambda x: init_multiple_cameras(x, camera_space)),
+        num_cameras=num_cameras,
+        depth=True,
+        cam_info=True,
+        reward_type='wrapped_env',
+        flatten=False
+    )
