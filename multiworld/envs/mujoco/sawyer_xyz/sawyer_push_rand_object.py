@@ -88,12 +88,19 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
             np.hstack((self.hand_high, puck_high)),
             dtype=np.float32
         )
+        # Hand xyz, puck xy, puck z, puck orientation
+        self.hand_and_puck_full_space = Box(
+            np.hstack((self.hand_low, puck_low, [0], -np.ones(9))),
+            np.hstack((self.hand_high, puck_high, [1], np.ones(9))),
+            dtype=np.float32
+        )
         self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
         self.observation_space = Dict([
             ('observation', self.hand_and_puck_space),
             ('desired_goal', self.hand_and_puck_space),
             ('achieved_goal', self.hand_and_puck_space),
             ('state_observation', self.hand_and_puck_space),
+            ('full_state_observation', self.hand_and_puck_full_space),
             ('state_desired_goal', self.hand_and_puck_space),
             ('state_achieved_goal', self.hand_and_puck_space),
             ('proprio_observation', self.hand_space),
@@ -461,16 +468,28 @@ class SawyerPushAndReachXYRandObjectEnv(SawyerPushAndReachXYZRandObjectEnv):
         self.hand_z_position = hand_z_position
         self.action_space = Box(np.array([-1, -1]), np.array([1, 1]), dtype=np.float32)
         self.fixed_goal[2] = hand_z_position
+
         hand_and_puck_low = self.hand_and_puck_space.low.copy()
         hand_and_puck_low[2] = hand_z_position
+
         hand_and_puck_high = self.hand_and_puck_space.high.copy()
         hand_and_puck_high[2] = hand_z_position
+
+        hand_and_puck_full_space_low = self.hand_and_puck_full_space.low.copy()
+        hand_and_puck_full_space_low[2] = hand_z_position
+
+        hand_and_puck_full_space_high = self.hand_and_puck_full_space.high.copy()
+        hand_and_puck_full_space_high[2] = hand_z_position
+
         self.hand_and_puck_space = Box(hand_and_puck_low, hand_and_puck_high, dtype=np.float32)
+        self.hand_and_puck_full_space = Box(hand_and_puck_full_space_low, hand_and_puck_full_space_high, dtype=np.float32)
+
         self.observation_space = Dict([
             ('observation', self.hand_and_puck_space),
             ('desired_goal', self.hand_and_puck_space),
             ('achieved_goal', self.hand_and_puck_space),
             ('state_observation', self.hand_and_puck_space),
+            ('full_state_observation', self.hand_and_puck_full_space),
             ('state_desired_goal', self.hand_and_puck_space),
             ('state_achieved_goal', self.hand_and_puck_space),
             ('proprio_observation', self.hand_space),
