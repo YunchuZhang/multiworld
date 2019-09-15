@@ -161,8 +161,10 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
 
     def _get_obs(self):
         e = self.get_endeff_pos()
-        b = self.get_puck_pos()[:2]
-        flat_obs = np.concatenate((e, b))
+        b = self.get_puck_pos()
+        o = self.get_puck_orientation()
+        flat_obs = np.concatenate((e, b[:2]))
+        full_flat_obs = np.concatenate((e, b, o))
 
         return dict(
             observation=flat_obs,
@@ -171,6 +173,7 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
             state_observation=flat_obs,
             state_desired_goal=self._state_goal,
             state_achieved_goal=flat_obs,
+            full_state_observation=full_flat_obs,
             proprio_observation=flat_obs[:3],
             proprio_desired_goal=self._state_goal[:3],
             proprio_achieved_goal=flat_obs[:3],
@@ -232,6 +235,9 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
     def get_puck_pos(self):
         return self.data.get_body_xpos('puck').copy()
 
+    def get_puck_orientation(self):
+        return self.data.get_body_xmat('puck').flatten().copy()
+
     def sample_puck_xy(self):
         return np.array([0, 0.6])
 
@@ -289,7 +295,8 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
             self.data.set_mocap_quat('mocap', np.array([1, 0, 1, 0]))
 
     def reset(self):
-        self.change_model(np.random.choice(self.xml_paths))
+        if len(self.xml_paths) > 1:
+            self.change_model(np.random.choice(self.xml_paths))
         ob = self.reset_model()
         if self.viewer is not None:
             self.viewer_setup()
