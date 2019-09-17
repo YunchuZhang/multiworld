@@ -59,7 +59,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         """
         self.quick_init(locals())
         super().__init__(wrapped_env)
-        self.wrapped_env.hide_goal_markers = True
+        self.wrapped_env.hide_goal_markers = False
         self.imsize = imsize
         self.init_camera = init_camera
         self.num_cameras = num_cameras
@@ -311,13 +311,14 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             else:
                 return self.wrapped_env.render(mode='rgb_array')
         elif mode == 'cv2':
+            # import ipdb;ipdb.set_trace()
             if self._last_image is None:
                 self._last_image = self._wrapped_env.get_image(
                     width=self.imsize,
                     height=self.imsize,
                     depth=False
                 )
-            cv2.imshow('ImageEnv', self._last_image)
+            cv2.imshow('ImageEnv', self._last_image[4])
             cv2.waitKey(1)
         else:
             raise ValueError("Invalid render mode: {}".format(mode))
