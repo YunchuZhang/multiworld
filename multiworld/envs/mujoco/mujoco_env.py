@@ -160,16 +160,21 @@ class MujocoEnv(gym.Env):
         ])
 
 
-    def sample_views(self, cam_space, lookat_point):
-        dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], self.num_cameras)
+    def sample_views(self, cam_space, lookat_point=None):
         angles = np.random.uniform(cam_space['angle_low'], cam_space['angle_high'], self.num_cameras)
         elevs = np.random.uniform(cam_space['elev_low'], cam_space['elev_high'], self.num_cameras)
+        
+        if lookat_point is None:
+            dists = np.ones(self.num_cameras) * 0.4
+        else:
+            dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], self.num_cameras)
 
         for i, viewer in enumerate(self.viewers):
             viewer.cam.trackbodyid = 0
-            viewer.cam.lookat[0] = lookat_point[0]
-            viewer.cam.lookat[1] = lookat_point[1]
-            viewer.cam.lookat[2] = lookat_point[2]
+            if lookat_point is not None:
+                viewer.cam.lookat[0] = lookat_point[0]
+                viewer.cam.lookat[1] = lookat_point[1]
+                viewer.cam.lookat[2] = lookat_point[2]
             viewer.cam.distance = dists[i]
             viewer.cam.azimuth = angles[i]
             viewer.cam.elevation = elevs[i]
