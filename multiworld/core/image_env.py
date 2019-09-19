@@ -155,14 +155,14 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self._last_image = None
 
         # Fix initial black image problem
-        self.wrapped_env.sample_views(self.camera_space)
+        self.wrapped_env.sample_views(self.camera_space, [0.0, 0.0, 0.0])
         self.wrapped_env.reset()
         self._get_img()
 
     def step(self, action):
-        if self.camera_space:
-            self.wrapped_env.sample_views(self.camera_space)
         obs, reward, done, info = self.wrapped_env.step(action)
+        if self.camera_space:
+            self.wrapped_env.sample_views(self.camera_space, obs['state_observation'])
         new_obs = self._update_obs(obs)
         #imsave("check_01.png",obs["desired_goal_depth"][0])
         # st()
@@ -181,9 +181,9 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
 
     def reset(self):
-        if self.camera_space:
-            self.wrapped_env.sample_views(self.camera_space)
         obs = self.wrapped_env.reset()
+        if self.camera_space:
+            self.wrapped_env.sample_views(self.camera_space, obs['state_observation'])
         if self.num_goals_presampled > 0:
             goal = self.sample_goal()
 
