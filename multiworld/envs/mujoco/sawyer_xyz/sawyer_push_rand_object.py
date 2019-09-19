@@ -184,6 +184,7 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
             proprio_observation=flat_obs[:3],
             proprio_desired_goal=self._state_goal[:3],
             proprio_achieved_goal=flat_obs[:3],
+            object_size=self.sim.model.geom_size[self.sim.model.geom_name2id('puckbox')],
         )
 
     def _get_info(self):
