@@ -500,6 +500,7 @@ class SawyerPushAndReachXYRandObjectEnv(SawyerPushAndReachXYZRandObjectEnv):
             ('proprio_observation', self.hand_space),
             ('proprio_desired_goal', self.hand_space),
             ('proprio_achieved_goal', self.hand_space),
+            ('object_size', self.object_size_space),
         ])
 
     def step(self, action):
