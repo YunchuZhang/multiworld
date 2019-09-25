@@ -95,6 +95,9 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
             dtype=np.float32
         )
         self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
+
+        self.object_size_space = Box(np.zeros(3), np.ones(3) * float('inf'), dtype=np.float32)
+
         self.observation_space = Dict([
             ('observation', self.hand_and_puck_space),
             ('desired_goal', self.hand_and_puck_space),
@@ -106,6 +109,7 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
             ('proprio_observation', self.hand_space),
             ('proprio_desired_goal', self.hand_space),
             ('proprio_achieved_goal', self.hand_space),
+            ('object_size', self.object_size_space),
         ])
         self.init_puck_z = init_puck_z
         self.init_hand_xyz = np.array(init_hand_xyz)
