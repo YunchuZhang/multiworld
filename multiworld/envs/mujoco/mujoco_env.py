@@ -160,12 +160,13 @@ class MujocoEnv(gym.Env):
         ])
 
 
-    def sample_views(self, cam_space, lookat_point=None):
+    def sample_views(self, cam_space, lookat_point=None, object_size=None):
         angles = np.random.uniform(cam_space['angle_low'], cam_space['angle_high'], self.num_cameras)
         elevs = np.random.uniform(cam_space['elev_low'], cam_space['elev_high'], self.num_cameras)
-        
-        if lookat_point is None:
-            dists = np.ones(self.num_cameras) * 0.4
+
+        if object_size is not None:
+            max_dim = np.max(object_size)
+            dists = np.random.uniform(max_dim * 1.5, max_dim * 3, self.num_cameras)
         else:
             dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], self.num_cameras)
 

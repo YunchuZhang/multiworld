@@ -27,6 +27,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             camera_space=None,
             depth=False,
             cam_info=False,
+            track_object=False,
             transpose=False,
             flatten=True,
             grayscale=False,
@@ -67,6 +68,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self.camera_space = camera_space
         self.depth = depth
         self.cam_info = cam_info
+        self.track_object = track_object
         self.transpose = transpose
         self.flatten = flatten
         self.grayscale = grayscale
@@ -155,14 +157,25 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self._last_image = None
 
         # Fix initial black image problem
-        self.wrapped_env.sample_views(self.camera_space, [0.0, 0.0, 0.0])
+        lookat_point = None
+        if track_object:
+            lookat_point = [0.0, 0.0, 0.0]
+            object_size = [1]
+        self.wrapped_env.sample_views(self.camera_space, lookat_point, object_size)
         self.wrapped_env.reset()
         self._get_img()
 
     def step(self, action):
         obs, reward, done, info = self.wrapped_env.step(action)
+
         if self.camera_space:
-            self.wrapped_env.sample_views(self.camera_space, obs['state_observation'])
+            lookat_point = None
+            object_size = None
+            if self.track_object:
+                lookat_point = obs['full_state_observation'][3:6]
+                object_size = obs['object_size']
+            self.wrapped_env.sample_views(self.camera_space, lookat_point, object_size)
+
         new_obs = self._update_obs(obs)
         #imsave("check_01.png",obs["desired_goal_depth"][0])
         # st()
@@ -182,8 +195,15 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
     def reset(self):
         obs = self.wrapped_env.reset()
+
         if self.camera_space:
-            self.wrapped_env.sample_views(self.camera_space, obs['state_observation'])
+            lookat_point = None
+            object_size = None
+            if self.track_object:
+                lookat_point = obs['full_state_observation'][3:6]
+                object_size = obs['object_size']
+            self.wrapped_env.sample_views(self.camera_space, lookat_point, object_size)
+
         if self.num_goals_presampled > 0:
             goal = self.sample_goal()
 
