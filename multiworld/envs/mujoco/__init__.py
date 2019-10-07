@@ -136,7 +136,7 @@ def register_mujoco_envs():
                        'sawyer_xyz/sawyer_push_printer.xml',
                        # Do not include the objects below for now
                        # Their object size is incorrect
-                       'sawyer_xyz/sawyer_push_puck.xml',
+                       #'sawyer_xyz/sawyer_push_puck.xml',
                        'sawyer_xyz/sawyer_push_mug3.xml',
                        'sawyer_xyz/sawyer_push_bowl2.xml',
                        'sawyer_xyz/sawyer_push_can1.xml',
