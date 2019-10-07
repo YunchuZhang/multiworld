@@ -41,6 +41,13 @@ Usage:
         <mesh name="mug1" file="mug1.stl" />
         <mesh name="mug2" file="mug2.stl" />
         <mesh name="mug3" file="mug3.stl" />
+        <mesh name="mouse" file="mouse.stl" />
+        <mesh name="book" file="book.stl" />
+        <mesh name="coffee_mug" file="coffee_mug.stl" />
+        <mesh name="boat2" file="boat2.stl" />
+        <mesh name="headphones" file="headphones.stl" />
+        <mesh name="ball" file="ball.stl" />
+        <mesh name="eyeglass" file="eyeglass.stl" />
         <mesh name="printer" file="printer.stl" />        
     </asset>
 

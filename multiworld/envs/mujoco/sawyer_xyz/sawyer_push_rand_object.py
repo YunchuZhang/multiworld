@@ -44,8 +44,9 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
         self.quick_init(locals())
 
         self.xml_paths = xml_paths
+        self.current_xml_path = np.random.choice(self.xml_paths)
 
-        self.model_name=get_asset_full_path(np.random.choice(self.xml_paths))
+        self.model_name=get_asset_full_path(self.current_xml_path)
         MultitaskEnv.__init__(self)
         SawyerXYZEnv.__init__(
             self,
@@ -122,7 +123,8 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
         self.reset()
 
 
-    def change_model(self, model_path):
+    def change_model(self):
+        model_path = self.current_xml_path
         if model_path.startswith("/"):
             fullpath = model_path
         else:
@@ -308,7 +310,8 @@ class SawyerPushAndReachXYZRandObjectEnv(MultitaskEnv, SawyerXYZEnv):
 
     def reset(self):
         if len(self.xml_paths) > 1:
-            self.change_model(np.random.choice(self.xml_paths))
+            self.current_xml_path = np.random.choice(self.xml_paths)
+            self.change_model()
         ob = self.reset_model()
         if self.viewer is not None:
             self.viewer_setup()

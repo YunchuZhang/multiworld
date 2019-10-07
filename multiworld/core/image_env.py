@@ -158,6 +158,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
         # Fix initial black image problem
         lookat_point = None
+        object_size = None
         if track_object:
             lookat_point = [0.0, 0.0, 0.0]
             object_size = [1]

@@ -117,21 +117,29 @@ def register_mujoco_envs():
             reward_type='state_distance',
             reset_free=False,
             clamp_puck_on_step=True,
-            xml_paths=[#'sawyer_xyz/sawyer_push_puck.xml',
+            xml_paths=['sawyer_xyz/sawyer_push_ball.xml',
                        'sawyer_xyz/sawyer_push_boat.xml',
-                       'sawyer_xyz/sawyer_push_bowl1.xml',
-                       'sawyer_xyz/sawyer_push_bowl2.xml',
-                       'sawyer_xyz/sawyer_push_can1.xml',
+                       'sawyer_xyz/sawyer_push_boat2.xml',
+                       'sawyer_xyz/sawyer_push_book.xml',
                        'sawyer_xyz/sawyer_push_car1.xml',
                        'sawyer_xyz/sawyer_push_car2.xml',
                        'sawyer_xyz/sawyer_push_car3.xml',
                        'sawyer_xyz/sawyer_push_car4.xml',
+                       'sawyer_xyz/sawyer_push_coffee_mug.xml',
+                       'sawyer_xyz/sawyer_push_eyeglass.xml',
                        'sawyer_xyz/sawyer_push_hat1.xml',
                        'sawyer_xyz/sawyer_push_hat2.xml',
+                       'sawyer_xyz/sawyer_push_headphones.xml',
+                       'sawyer_xyz/sawyer_push_mouse.xml',
                        'sawyer_xyz/sawyer_push_mug1.xml',
                        'sawyer_xyz/sawyer_push_mug2.xml',
-                       'sawyer_xyz/sawyer_push_mug3.xml',
                        'sawyer_xyz/sawyer_push_printer.xml',
+                       # Do not include the objects below for now
+                       # Their object size is incorrect
+                       'sawyer_xyz/sawyer_push_puck.xml',
+                       'sawyer_xyz/sawyer_push_mug3.xml',
+                       'sawyer_xyz/sawyer_push_bowl2.xml',
+                       'sawyer_xyz/sawyer_push_can1.xml',
             ]
         )
     )
@@ -819,7 +827,8 @@ def create_multicamera_push_random_objects(normalize=False,
                                            angle_high=180,
                                            elev_low=-180,
                                            elev_high=-90,
-                                           num_cameras=4):
+                                           num_cameras=4,
+                                           xml_paths=None):
 
     from multiworld.core.image_env import ImageEnv
     from multiworld.envs.mujoco.cameras import init_multiple_cameras
@@ -831,16 +840,32 @@ def create_multicamera_push_random_objects(normalize=False,
                     'elev_low': elev_low,
                     'elev_high': elev_high}
 
-    return ImageEnv(
-        wrapped_env=gym.make('SawyerPushRandomObjects-v0', reward_type='puck_success'),
-        imsize=64,
-        normalize=normalize,
-        camera_space=camera_space,
-        init_camera=(lambda x: init_multiple_cameras(x, camera_space)),
-        num_cameras=num_cameras,
-        depth=True,
-        cam_info=True,
-        track_object=track_object,
-        reward_type='wrapped_env',
-        flatten=False
-    )
+    if xml_paths:
+        return ImageEnv(
+            wrapped_env=gym.make('SawyerPushRandomObjects-v0', reward_type='puck_success', xml_paths=xml_paths),
+            imsize=64,
+            normalize=normalize,
+            camera_space=camera_space,
+            init_camera=(lambda x: init_multiple_cameras(x, camera_space)),
+            num_cameras=num_cameras,
+            depth=True,
+            cam_info=True,
+            track_object=track_object,
+            reward_type='wrapped_env',
+            flatten=False
+        )
+    else:
+        return ImageEnv(
+            wrapped_env=gym.make('SawyerPushRandomObjects-v0', reward_type='puck_success'),
+            imsize=64,
+            normalize=normalize,
+            camera_space=camera_space,
+            init_camera=(lambda x: init_multiple_cameras(x, camera_space)),
+            num_cameras=num_cameras,
+            depth=True,
+            cam_info=True,
+            track_object=track_object,
+            reward_type='wrapped_env',
+            flatten=False
+        )
+        

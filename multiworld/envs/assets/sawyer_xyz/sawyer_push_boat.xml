@@ -4,7 +4,7 @@
     <include file="sawyer_xyz_base_pusher.xml" />
         <body name="puck" pos="0 0 0.1">
             <joint limited="false" name="puckjoint" type="free" />
-            <inertial diaginertia=".00000002 .00000002 .00000001" mass="7.0" pos="0 0 0" />
+            <inertial diaginertia=".00000002 .00000002 .00000001" mass="17.0" pos="0 0 0" />
             <geom friction="0.2 0.2 .0001" mesh="boat" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
             
         </body>
