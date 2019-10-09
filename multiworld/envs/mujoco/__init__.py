@@ -116,7 +116,7 @@ def register_mujoco_envs():
             norm_order=2,
             reward_type='state_distance',
             reset_free=False,
-            clamp_puck_on_step=True,
+            clamp_puck_on_step=False,
             xml_paths=['sawyer_xyz/sawyer_push_ball.xml',
                        'sawyer_xyz/sawyer_push_boat.xml',
                        'sawyer_xyz/sawyer_push_boat2.xml',

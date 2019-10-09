@@ -166,7 +166,7 @@ class MujocoEnv(gym.Env):
 
         if object_size is not None:
             max_dim = np.max(object_size)
-            dists = np.random.uniform(max_dim * 1.5, max_dim * 3, self.num_cameras)
+            dists = np.random.uniform(max_dim * 3.25, max_dim * 4, self.num_cameras)
         else:
             dists = np.random.uniform(cam_space['dist_low'], cam_space['dist_high'], self.num_cameras)
 
