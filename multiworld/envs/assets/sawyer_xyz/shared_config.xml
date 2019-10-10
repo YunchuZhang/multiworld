@@ -28,7 +28,7 @@ Usage:
         <mesh name="l6" file="l6.stl" />
         <mesh name="l7" file="cap.stl" />
         <mesh name="boat" file="boat.stl" />
-        <mesh name="bowl1" file="bowl1.stl" />
+        <mesh name="bowl" file="bowl.stl" />
         <mesh name="bowl2" file="bowl2.stl" />
         <mesh name="box1" file="box1.stl" />
         <mesh name="can1" file="can1.stl" />
@@ -48,6 +48,17 @@ Usage:
         <mesh name="headphones" file="headphones.stl" />
         <mesh name="ball" file="ball.stl" />
         <mesh name="eyeglass" file="eyeglass.stl" />
+        <mesh name="plane" file="plane.stl" />
+        <mesh name="hamet" file="hamet.stl" />
+        <mesh name="clock" file="clock.stl" />
+        <mesh name="skate" file="skate.stl" />
+        <mesh name="bag1" file="bag1.stl" />
+        <mesh name="bag2" file="bag2.stl" />
+        <mesh name="bag22" file="bag22.stl" />
+        <mesh name="keyboard" file="keyboard.stl" />
+        <mesh name="knife" file="knife.stl" />
+        <mesh name="knife2" file="knife2.stl" />
+        <mesh name="pillow" file="pillow.stl" />
         <mesh name="printer" file="printer.stl" />        
     </asset>
 

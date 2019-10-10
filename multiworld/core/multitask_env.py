@@ -47,12 +47,12 @@ class MultitaskEnv(gym.Env, metaclass=abc.ABCMeta):
         goals = self.sample_goals(1)
         return self.unbatchify_dict(goals, 0)
 
-    def compute_reward(self, action, obs):
-        actions = action[None]
-        next_obs = {
-            k: v[None] for k, v in obs.items()
-        }
-        return self.compute_rewards(actions, next_obs)[:2]
+    def compute_reward(self, achieved_goal,desired_goal):
+        # actions = action[None]
+        # next_obs = {
+        #     k: v[None] for k, v in obs.items()
+        # }
+        return self.compute_rewards(achieved_goal,desired_goal)[:2]
 
     def get_diagnostics(self, *args, **kwargs):
         """

@@ -131,7 +131,7 @@ Usage:
                                                                 name="rightclaw_it" condim="4" contype="2" conaffinity="2" class="1" mass="0.08" type="box" pos="0 0 0" size="0.025 0.005 0.02" rgba="0.0 1.0 0.0 1.0" friction="1 0.05 0.01"
                                                                 euler="0 0 0.2"
                                                         />
-                                                        <joint name="rc_close" type="slide" pos="0 0 0" axis="0 1 0" range="0 .04" user="008" limited="true"/>
+                                                        <!-- <joint name="rc_close" type="slide" pos="0 0 0" axis="0 1 0" range="0.039 .04" user="008" limited="true"/> -->
                                                         <site name="endeffector2" pos=".015 .01 0" size="0.008" rgba="0.0 0.0 0.0 0.0" />
                                                     </body>
                                                     <body name="leftclaw" pos=".03 .03 0">

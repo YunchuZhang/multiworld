@@ -34,3 +34,49 @@
        <motor gear="100" joint="rc_close"  />
     </actuator>
 </mujoco>
+<mujoco>
+  <include file="shared_config.xml" />
+  <default>
+    <default class="/" />
+  </default>
+  <asset>
+    <mesh class="/" file="/Users/zyc/Downloads/mesh2/knife_convex_0.stl" name="obj_mesh0" scale="1.5 1.5 1.5" />
+    <mesh class="/" file="/Users/zyc/Downloads/mesh2/knife_convex_1.stl" name="obj_mesh1" scale="1.5 1.5 1.5" />
+    <mesh class="/" file="/Users/zyc/Downloads/mesh2/knife_convex_2.stl" name="obj_mesh2" scale="1.5 1.5 1.5" />
+ <!--    <mesh class="/" file="/Users/zyc/Downloads/bag_object/3.stl" name="obj_mesh3" scale="1.5 1.5 1.5" />
+    <mesh class="/" file="/Users/zyc/Downloads/bag_object/4.stl" name="obj_mesh4" scale="1.5 1.5 1.5" />
+    <mesh class="/" file="/Users/zyc/Downloads/bag_object/5.stl" name="obj_mesh5" scale="1.5 1.5 1.5" />
+    <mesh class="/" file="/Users/zyc/Downloads/bag_object/6.stl" name="obj_mesh6" scale="1.5 1.5 1.5" />
+    <mesh class="/" file="/Users/zyc/Downloads/bag_object/7.stl" name="obj_mesh7" scale="1.5 1.5 1.5" /> -->
+</asset>
+  <worldbody>
+    <include file="sawyer_xyz_base_pusher.xml" />
+        <body name="puck" pos="0 0 0.1">
+            <joint limited="false" name="puckjoint" type="free" />
+            
+<!--               <geom class="/" condim="4" friction="0.0005 0.0004 .0001" group="1" mass="8" mesh="knife" name="object:0" type="mesh" /> -->
+              <geom class="/" condim="4" group="1" mass="4.0" mesh="obj_mesh0" name="object:0" type="mesh" />
+              <geom class="/" condim="4" group="1" mass="2.0" mesh="obj_mesh1" name="object:1" type="mesh" />
+              <geom class="/" condim="4" group="1" mass="3.0" mesh="obj_mesh2" name="object:2" type="mesh" />
+              <!-- <geom class="/" condim="4" group="1" mass="1000.0" mesh="obj_mesh3" name="object:3" type="mesh" />
+              <geom class="/" condim="4" group="1" mass="1000.0" mesh="obj_mesh4" name="object:4" type="mesh" />
+              <geom class="/" condim="4" group="1" mass="1000.0" mesh="obj_mesh5" name="object:5" type="mesh" />
+              <geom class="/" condim="4" group="1" mass="1000.0" mesh="obj_mesh6" name="object:6" type="mesh" />
+              <geom class="/" condim="4" group="1" mass="1000.0" mesh="obj_mesh7" name="object:7" type="mesh" />
+             -->
+        </body>
+
+        <site name="hand-goal-site" pos="0 0 0" rgba="1 0.5 0.5 0.5" size="0.01" />
+        <site name="puck-goal-site" pos="0 0 0" rgba="0.5 0.5 1 0.5" size="0.01" />
+  </worldbody>
+    <actuator>
+        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j0" />
+        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j1" />
+        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j2" />
+        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j3" />
+        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j4" />
+        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j5" />
+        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j6" />
+       <motor gear="100" joint="rc_close" />
+    </actuator>
+</mujoco>
