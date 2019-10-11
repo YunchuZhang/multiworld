@@ -415,6 +415,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		# 	ord=self.norm_order,
 		# 	axis=0,
 		# )
+		if achieved_goal.shape[0] == 5:
+			achieved_goal = np.reshape(achieved_goal,(1,5))
+			desired_goal = np.reshape(desired_goal,(1,5))
 
 		achieved_goals = achieved_goal
 		desired_goals = desired_goal #(batch_size, 3)
