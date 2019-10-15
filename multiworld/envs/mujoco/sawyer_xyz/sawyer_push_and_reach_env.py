@@ -1,3 +1,4 @@
+import os
 from collections import OrderedDict
 import numpy as np
 from gym.spaces import Box, Dict
@@ -7,7 +8,7 @@ from multiworld.envs.env_util import get_stat_in_paths, \
 	create_stats_ordered_dict, get_asset_full_path
 from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.envs.mujoco.sawyer_xyz.base import SawyerXYZEnv
-
+import PIL.Image as Image
 import mujoco_py
 
 class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
@@ -18,7 +19,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
 			reward_type='puck_success',
 			norm_order=1,
-			indicator_threshold=0.02,
+			indicator_threshold=0.07,
 			puck_to_goal_threshold = 0.07,
 
 			hand_low=(-0.28, 0.3, 0.05),
@@ -127,6 +128,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.puck_to_goal_threshold = puck_to_goal_threshold
 		self.num = 0
 		self.time_step = 1
+		self.log_dir = "/projects/katefgroup/yunchu/mujoco_imgs"
+		if not os.path.exists(self.log_dir):
+			os.makedirs(self.log_dir)
 		self.reset()
 
 	def viewer_setup(self):
@@ -139,7 +143,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.viewer.cam.azimuth = 270
 		self.viewer.cam.trackbodyid = -1
 
-	def step(self, action):
+	def step(self, action, render=False):
 		self.set_xyz_action(action)
 		u = None
 		self.do_simulation(u)
@@ -149,12 +153,30 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			self._set_puck_xy(curr_puck_pos)
 		self._set_goal_marker(self._state_goal)
 		ob = self._get_obs()
+
 		# reward = self.compute_reward(action, ob)
 		# done = False
 		reward, done = self.compute_reward(ob['achieved_goal'],ob['desired_goal'])
 		# reward = reward * self.time_step
-		# self.time_step += 1
+		self.time_step += 1
+		# for i in range(self.data.ncon):
+		# 	c = self.data.contact[i]
+		# 	if self.sim.model.geom_id2name(c.geom1) == "hand":
+		# 		if self.sim.model.geom_id2name(c.geom2) == "puck":
+		# 			print('in_contact')
+		# 			from IPython import embed; embed()
+
+		# 	if self.sim.model.geom_id2name(c.geom2) == "hand":
+		# 		if self.sim.model.geom_id2name(c.geom1) == "puck":
+		# 			print('in_contact')
+		# 			from IPython import embed; embed()
+
 		info = self._get_info()
+		if render:
+			img = self.sim.render(640, 480, camera_name="yunchu_view")
+			img = Image.fromarray(img)
+			img = img.rotate(-180)
+			img.save(f'{self.log_dir}/img_{self.time_step}.jpg')
 		return ob, reward, done, info
 
 	def _get_obs(self):
@@ -305,7 +327,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			self.data.set_mocap_quat('mocap', np.array([1, 0, 1, 0]))
 
 	def reset(self):
-		self.time_step = 1
+		# self.time_step = 1
 		ob = self.reset_model()
 		if self.viewer is not None:
 			self.viewer_setup()
@@ -469,12 +491,13 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			# 	r = np.array([-0.5])
 			# else:
 			# 	r = np.array([-1.0])
-			r = -(puck_distances > self.indicator_threshold).astype(float)
+			# r = -(puck_distances > self.indicator_threshold).astype(float)
 
 			# r =  -5 * (1 - np.tanh(0.1*puck_distances)) 
-			done = puck_distances < self.indicator_threshold
-			# r = -(hand_distances > self.indicator_threshold).astype(float)
-			# done = hand_distances<self.indicator_threshold
+			# done = puck_distances < self.indicator_threshold
+			r = -(hand_distances > self.indicator_threshold).astype(float)
+			done = hand_distances<self.indicator_threshold
+
 		elif self.reward_type == 'hand_and_puck_distance':
 			r = -(puck_distances + hand_distances)
 			done = (puck_distances<self.indicator_threshold) and (hand_distances<self.indicator_threshold)

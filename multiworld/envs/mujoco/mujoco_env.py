@@ -110,6 +110,8 @@ class MujocoEnv(gym.Env):
         return self.model.opt.timestep * self.frame_skip
 
     def do_simulation(self, ctrl, n_frames=None):
+        # index = self._gripper_indicator_low
+        # self.sim.data.qpos[index: index+3] = self.sim.data.get_body_xpos('hand')
         if n_frames is None:
             n_frames = self.frame_skip
         if self.sim.data.ctrl is not None and ctrl is not None:

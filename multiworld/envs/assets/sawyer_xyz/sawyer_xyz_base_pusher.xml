@@ -15,6 +15,7 @@ Usage:
 
 <mujoco model="sawyer">
     <camera pos="0 0 3.2" name="topview" />
+    <camera pos="0 0.8 1." zaxis="0 0 1" name="yunchu_view" />
 
     <!--<geom name="floor" type="plane" pos="0 0 -.9" size="10 10 10"-->
           <!--rgba="0 0 0 1" contype="15" conaffinity="15" />-->
