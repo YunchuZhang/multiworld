@@ -78,6 +78,8 @@ class SawyerXYZEnv(SawyerMocapBase, metaclass=abc.ABCMeta):
             mocap_low = hand_low
         if mocap_high is None:
             mocap_high = hand_high
+        print('mocap_low=', mocap_low)
+        print('mocap_high=', mocap_high)
         self.mocap_low = np.hstack(mocap_low)
         self.mocap_high = np.hstack(mocap_high)
 

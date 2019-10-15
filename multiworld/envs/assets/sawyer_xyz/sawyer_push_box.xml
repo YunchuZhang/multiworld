@@ -4,7 +4,7 @@
     <include file="sawyer_xyz_base_pusher.xml" />
         <body name="puck" pos="0 0 0.1">
             <joint limited="false" name="puckjoint" type="free" />
-            <geom friction="0.2 0.2 .0001" mass="6.0" mesh="boat2" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
+            <geom friction="0.008 0.008 .00001" mass="0.31" mesh="mug1" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
             
         </body>
 
@@ -12,7 +12,7 @@
         <site name="hand-goal-site" pos="0 0 0" rgba="1 0.5 0.5 0.5" size="0.01" />
         <site name="puck-goal-site" pos="0 0 0" rgba="0.5 0.5 1 0.5" size="0.01" />
   </worldbody>
-    <actuator>
+    <!-- <actuator>
         <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j0" />
         <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j1" />
         <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j2" />
@@ -21,5 +21,5 @@
         <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j5" />
         <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j6" />
        
-    </actuator>
+    </actuator> -->
 </mujoco>
