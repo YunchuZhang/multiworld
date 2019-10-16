@@ -43,7 +43,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			puck_radius=.07,
 			**kwargs
 	):
-		self._max_episode_steps = 20
+		# self._max_episode_steps = 20
 		self.quick_init(locals())
 		self.model_name=get_asset_full_path(xml_path)
 		MultitaskEnv.__init__(self)
@@ -128,9 +128,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.puck_to_goal_threshold = puck_to_goal_threshold
 		self.num = 0
 		self.time_step = 1
-		self.log_dir = "/projects/katefgroup/yunchu/mujoco_imgs"
-		if not os.path.exists(self.log_dir):
-			os.makedirs(self.log_dir)
+		# self.log_dir = "/projects/katefgroup/yunchu/mujoco_imgs"
+		# if not os.path.exists(self.log_dir):
+		# 	os.makedirs(self.log_dir)
 		self.reset()
 
 	def viewer_setup(self):
@@ -154,22 +154,11 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self._set_goal_marker(self._state_goal)
 		ob = self._get_obs()
 
-		# reward = self.compute_reward(action, ob)
-		# done = False
-		reward, done = self.compute_reward(ob['achieved_goal'],ob['desired_goal'])
+		reward, _ = self.compute_reward(ob['achieved_goal'], ob['desired_goal'])
+		done = False
+		# reward, done = self.compute_reward(ob['achieved_goal'],ob['desired_goal'])
 		# reward = reward * self.time_step
 		self.time_step += 1
-		# for i in range(self.data.ncon):
-		# 	c = self.data.contact[i]
-		# 	if self.sim.model.geom_id2name(c.geom1) == "hand":
-		# 		if self.sim.model.geom_id2name(c.geom2) == "puck":
-		# 			print('in_contact')
-		# 			from IPython import embed; embed()
-
-		# 	if self.sim.model.geom_id2name(c.geom2) == "hand":
-		# 		if self.sim.model.geom_id2name(c.geom1) == "puck":
-		# 			print('in_contact')
-		# 			from IPython import embed; embed()
 
 		info = self._get_info()
 		if render:
@@ -264,7 +253,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		
 
 	def sample_puck_xy(self):
-		return np.array([0, 0.6])
+		return np.array([0, 0.65])
 		# init_puck  = np.random.uniform(
 		#         self.goal_low[3:],
 		#         self.goal_high[3:],
@@ -327,7 +316,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			self.data.set_mocap_quat('mocap', np.array([1, 0, 1, 0]))
 
 	def reset(self):
-		# self.time_step = 1
+		self.time_step = 1
 		ob = self.reset_model()
 		if self.viewer is not None:
 			self.viewer_setup()

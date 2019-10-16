@@ -122,7 +122,8 @@ def register_mujoco_envs():
             reward_type='puck_success',
             reset_free=False,
             clamp_puck_on_step=False,
-        )
+        ),
+        max_episode_steps=50,
     )
 
     register(
@@ -271,7 +272,7 @@ def register_mujoco_envs():
     )
 
     """
-    NIPS submission pusher environment
+    N onment
     """
     register(
         id='SawyerPushNIPS-v0',
