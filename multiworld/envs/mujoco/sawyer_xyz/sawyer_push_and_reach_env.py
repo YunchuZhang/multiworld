@@ -256,7 +256,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		
 
 	def sample_puck_xy(self):
-		return np.array([0, 0.9])
+		return np.array([0, 0.6])
 		# init_puck  = np.random.uniform(
 		#         self.goal_low[3:],
 		#         self.goal_high[3:],
@@ -377,9 +377,13 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		# 	puck_goal_xy = goal['state_desired_goal'][3:]
 		# 	dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
 		# 	dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
-			# step += 1
-			# if step==1000: break
-		goal['state_desired_goal'][3:] = np.array([0.04, 0.65])
+		while (dist_to_goal<=2*self.indicator_threshold or dist_to_goal>=3*self.indicator_threshold):
+			goal = self.sample_goal()
+			hand_goal_xy = goal['state_desired_goal'][:2]
+			puck_goal_xy = goal['state_desired_goal'][3:]
+			dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
+			dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
+		# goal['state_desired_goal'][3:] = np.array([0.04, 0.65])
 		# if self.num == 5:
 		# 	self.num = 0
 
@@ -485,12 +489,12 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			# 	r = np.array([-0.5])
 			# else:
 			# 	r = np.array([-1.0])
-			# r = -(puck_distances > self.indicator_threshold).astype(float)
+			r = -(puck_distances > self.indicator_threshold).astype(float)
 
 			# r =  -5 * (1 - np.tanh(0.1*puck_distances)) 
-			# done = puck_distances < self.indicator_threshold
-			r = -(hand_distances > self.indicator_threshold).astype(float)
-			done = hand_distances<self.indicator_threshold
+			done = puck_distances < self.indicator_threshold
+			# r = -(hand_distances > self.indicator_threshold).astype(float)
+			# done = hand_distances<self.indicator_threshold
 
 		elif self.reward_type == 'hand_and_puck_distance':
 			r = -(puck_distances + hand_distances)
