@@ -251,7 +251,8 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		return self.data.get_body_xpos('puck').copy()
 
 	def get_puck_orientation(self):
-		# return self.data.get_body_xmat('puck').flatten().copy()
+		# return self.data.get_
+		body_xmat('puck').flatten().copy()
 		return self.data.get_body_xquat('puck').flatten().copy()
 		
 
