@@ -19,7 +19,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
 			reward_type='puck_success',
 			norm_order=1,
-			indicator_threshold=0.07,
+			indicator_threshold=0.02,
 			puck_to_goal_threshold = 0.07,
 
 			hand_low=(-0.28, 0.3, 0.05),
@@ -128,9 +128,10 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.puck_to_goal_threshold = puck_to_goal_threshold
 		self.num = 0
 		self.time_step = 1
+		self.another_timestep = 1
 		# self.log_dir = "/projects/katefgroup/yunchu/mujoco_imgs"
 		# if not os.path.exists(self.log_dir):
-		# 	os.makedirs(self.log_dir)
+			# os.makedirs(self.log_dir)
 		self.reset()
 
 	def viewer_setup(self):
@@ -159,13 +160,14 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		# reward, done = self.compute_reward(ob['achieved_goal'],ob['desired_goal'])
 		# reward = reward * self.time_step
 		self.time_step += 1
+		self.another_timestep += 1
 
 		info = self._get_info()
 		if render:
-			img = self.sim.render(640, 480, camera_name="yunchu_view")
+			img = self.sim.render(256, 256, camera_name="yunchu_view")
 			img = Image.fromarray(img)
 			img = img.rotate(-180)
-			img.save(f'{self.log_dir}/img_{self.time_step}.jpg')
+			img.save(f'{self.log_dir}/img_{self.another_timestep}.jpg')
 		return ob, reward, done, info
 
 	def _get_obs(self):
@@ -196,8 +198,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		# hand distance
 		hand_diff = hand_goal - self.get_endeff_pos()
 		# hand_distance = np.linalg.norm(hand_diff, ord=self.norm_order)
+		# print('info_goals',self._state_goal[:2])
 
-		hand_distance = np.linalg.norm(self.get_puck_pos()[:2] - self.get_endeff_pos()[:2], ord=self.norm_order, axis=0)
+		hand_distance = np.linalg.norm(self._state_goal[:2] - self.get_endeff_pos()[:2], ord=self.norm_order, axis=0)
 		hand_distance_l1 = np.linalg.norm(hand_diff, 1)
 		hand_distance_l2 = np.linalg.norm(hand_diff, 2)
 
@@ -253,7 +256,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		
 
 	def sample_puck_xy(self):
-		return np.array([0, 0.65])
+		return np.array([0, 0.9])
 		# init_puck  = np.random.uniform(
 		#         self.goal_low[3:],
 		#         self.goal_high[3:],
@@ -448,7 +451,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		puck_goals = desired_goals[:, 3:]
 
 		# hand_distances = np.linalg.norm(hand_goals - hand_pos, ord=self.norm_order, axis=1)
-		hand_distances = np.linalg.norm(puck_pos - hand_pos[:,:2], ord=self.norm_order, axis=1)
+		# print('goals_reward',desired_goals[:,:2])
+		# print(desired_goals[:,:2].shape)
+		hand_distances = np.linalg.norm(desired_goals[:,:2] - hand_pos[:,:2], ord=self.norm_order, axis=1)
 		puck_distances = np.linalg.norm(puck_goals - puck_pos, ord=self.norm_order, axis=1)
 		puck_zs = self.init_puck_z * np.ones((desired_goals.shape[0], 1)) #(batch_size, 1)
 		touch_distances = np.linalg.norm(
