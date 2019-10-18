@@ -4,26 +4,14 @@
     <include file="sawyer_xyz_base_pusher.xml" />
         <body name="puck" pos="0 0 0.1">
             <joint limited="false" name="puckjoint" type="free" />
-            <geom friction="0.008 0.008 .00001" mass="0.31" mesh="mug1" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
-<!--             <geom friction="0.008 0.008 .00001" mass="0.31" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="box" size="0.02 0.02 0.02" /> -->
+            <geom friction="0.002 0.004 .0001" mass="3" mesh="keyboard" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
+
         </body>
 
 
         <site name="hand-goal-site" pos="0 0 0" rgba="1 0.5 0.5 0.5" size="0.01" />
         <site name="puck-goal-site" pos="0 0 0" rgba="0.5 0.5 1 0.5" size="0.01" />
-        <!-- <body name='pos_indicator_hand' pos='0 0 0'>
-            <joint limited="false" name="pos_indicator_jnt" type="free"/>
-            <geom name='pos_indicator_hand' type='sphere' size='0.03' rgba='0.1 0.1 0.9 0.8' group='1' contype='0' conaffinity='0' />
-        </body> -->
+        
   </worldbody>
-    <!-- <actuator>
-        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j0" />
-        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j1" />
-        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j2" />
-        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j3" />
-        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j4" />
-        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j5" />
-        <motor ctrllimited="false" ctrlrange="-100.0 100.0" joint="right_j6" />
-       
-    </actuator> -->
+    
 </mujoco>

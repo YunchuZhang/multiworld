@@ -71,6 +71,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.goal_low = np.array(goal_low)
 		self.goal_high = np.array(goal_high)
 
+
 		self.reward_type = reward_type
 		self.norm_order = norm_order
 		self.indicator_threshold = indicator_threshold
@@ -145,6 +146,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.viewer.cam.trackbodyid = -1
 
 	def step(self, action, render=False):
+		# obj_size = self.sim.model.geom_size[self.sim.model.geom_name2id('puckbox')]
+		# print('obj_size',obj_size)
+
 		self.set_xyz_action(action)
 		u = None
 		self.do_simulation(u)
@@ -256,12 +260,13 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		
 
 	def sample_puck_xy(self):
-		# return np.array([0, 0.6])
-		init_puck  = np.random.uniform(
-		        self.goal_low[3:],
-		        self.goal_high[3:],
-		        size=self.goal_low[3:].size,
-		    )
+		return np.array([0, 0.6])
+		# import ipdb;ipdb.set_trace()
+		# init_puck  = np.random.uniform(
+		#         self.goal_low[3:],
+		#         self.goal_high[3:],
+		#         size=self.goal_low[3:].size,
+		#     )
 		return init_puck
 
 	def _set_goal_marker(self, goal):
@@ -275,6 +280,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.data.site_xpos[self.model.site_name2id('puck-goal-site')][:2] = (
 			goal[3:]
 		)
+		self.data.site_xpos[self.model.site_name2id('hand-goal-site'), 2] = (
+				-1000
+			)
 		if self.hide_goal_markers:
 			self.data.site_xpos[self.model.site_name2id('hand-goal-site'), 2] = (
 				-1000
