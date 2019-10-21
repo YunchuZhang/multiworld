@@ -4,7 +4,7 @@
     <include file="sawyer_xyz_base_pusher.xml" />
         <body name="puck" pos="0 0 0.1">
             <joint limited="false" name="puckjoint" type="free" />
-            <geom friction="0.002 0.004 .0001" mass="3" mesh="keyboard" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
+            <geom friction="0.35 0.25 .000001" mass="21" mesh="knife" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
 
         </body>
 

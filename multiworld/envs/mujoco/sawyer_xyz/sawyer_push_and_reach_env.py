@@ -260,13 +260,13 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		
 
 	def sample_puck_xy(self):
-		return np.array([0, 0.6])
+		# return np.array([0, 0.6])
 		# import ipdb;ipdb.set_trace()
-		# init_puck  = np.random.uniform(
-		#         self.goal_low[3:],
-		#         self.goal_high[3:],
-		#         size=self.goal_low[3:].size,
-		#     )
+		init_puck  = np.random.uniform(
+		        self.goal_low[3:],
+		        self.goal_high[3:],
+		        size=self.goal_low[3:].size,
+		    )
 		return init_puck
 
 	def _set_goal_marker(self, goal):
