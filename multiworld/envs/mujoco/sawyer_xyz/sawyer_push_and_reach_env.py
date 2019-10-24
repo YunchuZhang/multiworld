@@ -10,6 +10,7 @@ from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.envs.mujoco.sawyer_xyz.base import SawyerXYZEnv
 import PIL.Image as Image
 import mujoco_py
+from pyquaternion import Quaternion
 
 class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 	def __init__(
@@ -92,8 +93,8 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.hand_and_puck_orientation_space = Box(
 			# np.hstack((self.hand_low, puck_low, -np.ones(9))),
 			# np.hstack((self.hand_high, puck_high, np.ones(9))),
-			-np.ones(9),
-			np.ones(9),
+			-np.ones(self.observation_size),
+			np.ones(self.observation_size),
 			dtype=np.float32
 		)
 		self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
@@ -136,6 +137,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
 		# Whether to return observations in absolute frame or relative frame
 		self.use_absolute_frame = False
+		self.observation_size = 6 #Set this to 9 for absolute frame
 
 		self.reset()
 
@@ -212,10 +214,13 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			obj_pos = np.pad(pos, pad_width=1)[1:]
 			obj_pos_end_eff = np.matmul(r_obj_to_endeff, obj_pos)[:2]
 
-			o_flatten = r_obj_to_endeff[:3,:3].flatten()
-			# rot = R.from_quat([0, 0, np.sin(np.pi/4), np.cos(np.pi/4)])
-			flat_obs_orientation = np.concatenate((obj_pos_end_eff, o_flatten))
-			
+			obj_orientation =  Quaternion(matrix=r_obj_to_endeff).elements
+
+			#o_flatten = r_obj_to_endeff[:3,:3].flatten()
+
+			flat_obs_orientation = np.concatenate((obj_pos_end_eff, obj_orientation))
+
+
 			e = self.get_endeff_pos()
 			b = self.get_puck_pos()[:2]
 			flat_obs = np.concatenate((e, b))
@@ -632,7 +637,7 @@ class SawyerPushAndReachXYEnv(SawyerPushAndReachXYZEnv):
 
 		self.hand_and_puck_space = Box(hand_and_puck_low, hand_and_puck_high, dtype=np.float32)
 		# self.hand_and_puck_orientation_space  = Box(np.hstack((hand_and_puck_low,-np.ones(9))), np.hstack(( hand_and_puck_high,np.ones(9))),  dtype=np.float32)
-		self.hand_and_puck_orientation_space  = Box(-np.ones(9), np.ones(9),  dtype=np.float32)
+		self.hand_and_puck_orientation_space  = Box(-np.ones(self.observation_size), np.ones(self.observation_size),  dtype=np.float32)
 
 		self.observation_space = Dict([
 			#('observation', self.hand_and_puck_space),
