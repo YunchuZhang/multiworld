@@ -133,6 +133,10 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		# self.log_dir = "/projects/katefgroup/yunchu/mujoco_imgs"
 		# if not os.path.exists(self.log_dir):
 			# os.makedirs(self.log_dir)
+
+		# Whether to return observations in absolute frame or relative frame
+		self.use_absolute_frame = False
+
 		self.reset()
 
 	def viewer_setup(self):
@@ -175,11 +179,42 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		return ob, reward, done, info
 
 	def _get_obs(self):
-		e = self.get_endeff_pos()
-		b = self.get_puck_pos()[:2]
-		o = self.get_puck_orientation()
-		flat_obs = np.concatenate((e, b))
-		flat_obs_orientation = np.concatenate((flat_obs, o))
+
+		if self.use_absolute_frame:
+			e = self.get_endeff_pos()
+			b = self.get_puck_pos()[:2]
+			o = self.get_puck_orientation()
+			flat_obs = np.concatenate((e, b))
+			flat_obs_orientation = np.concatenate((flat_obs, o))
+		else:
+			# convert everything to end effector frame
+
+			# First get rotation matrix for object in world frame
+			m = self.data.get_body_xmat('puck')
+			v = self.data.get_body_xpos('puck')
+			rot = np.concatenate((m, v[:, np.newaxis]),axis=1)
+			z = np.zeros((4,1))
+			z[3] = 1
+			r_obj = np.concatenate((rot, z.T), axis=0)
+
+			# Compute R_inv for gripper in world frame
+			# R_inv = R.T - R.T*t
+			rot = self.data.get_body_xmat('hand')
+			t = self.data.get_body_xpos('hand')
+			rot = np.concatenate((rot.T, -np.matmul(rot.T, t)[:, np.newaxis]),axis=1)
+			z = np.zeros((4,1))
+			z[3] = 1
+			r_end_eff = np.concatenate((rot, z.T), axis=0)
+
+			r_obj_to_endeff = np.matmul(r_obj, r_end_eff)
+
+			pos = self.get_puck_pos()
+			obj_pos = np.pad(pos, pad_width=1)[1:]
+			obj_pos_end_eff = np.matmul(r_obj_to_endeff, obj_pos)[:2]
+
+			o_flatten = r_obj_to_endeff[:3,:3].flatten()
+			# rot = R.from_quat([0, 0, np.sin(np.pi/4), np.cos(np.pi/4)])
+			flat_obs_orientation = np.concatenate((obj_pos_end_eff, o_flatten))
 
 		return dict(
 			#observation=flat_obs,
