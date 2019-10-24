@@ -215,6 +215,10 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			o_flatten = r_obj_to_endeff[:3,:3].flatten()
 			# rot = R.from_quat([0, 0, np.sin(np.pi/4), np.cos(np.pi/4)])
 			flat_obs_orientation = np.concatenate((obj_pos_end_eff, o_flatten))
+			
+			e = self.get_endeff_pos()
+			b = self.get_puck_pos()[:2]
+			flat_obs = np.concatenate((e, b))
 
 		return dict(
 			#observation=flat_obs,
