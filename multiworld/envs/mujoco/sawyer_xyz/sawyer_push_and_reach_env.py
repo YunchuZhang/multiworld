@@ -154,14 +154,14 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 	def step(self, action, render=False):
 		# obj_size = self.sim.model.geom_size[self.sim.model.geom_name2id('puckbox')]
 		# print('obj_size',obj_size)
+		low = np.ones(2) * -0.1
+		high = np.ones(2) * 0.1
+		action = np.clip(action, low, high)
+		delta_z = self.hand_z_position - self.data.m(ocap_pos[0, 2])
+		action = np.hstack(action, delta_z, np.array([1]))
+		action_world = np.matmul(r_end_eff, action)
+		self.set_xyz_action(action_world)
 
-                low = np.ones(2) * -0.1
-                high = np.ones(2) * 0.1
-                action = np.clip(action, low, high)
-                delta_z = self.hand_z_position - self.data.m(ocap_pos[0, 2])
-                action = np.hstack(action, delta_z, np.array([1]))
-                action_world = np.matmul(r_end_eff, action)
-                self.set_xyz_action(action)
 		u = None
 		self.do_simulation(u)
 		if self.clamp_puck_on_step:
@@ -428,18 +428,14 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		dist = np.linalg.norm(hand_goal_xy-puck_goal_xy)
 		dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
 		# step = 0
-		# while (dist_to_goal<=2*self.indicator_threshold or dist_to_goal>=3*self.indicator_threshold):
-		# 	goal = self.sample_goal()
-		# 	hand_goal_xy = goal['state_desired_goal'][:2]
-		# 	puck_goal_xy = goal['state_desired_goal'][3:]
-		# 	dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
-		# 	dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
+
 		#while (dist_to_goal<=2*self.indicator_threshold or dist_to_goal>=3*self.indicator_threshold):
 		#	goal = self.sample_goal()
 		#	hand_goal_xy = goal['state_desired_goal'][:2]
 		#	puck_goal_xy = goal['state_desired_goal'][3:]
 		#	dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
 		#	dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
+
 		goal['state_desired_goal'][3:] = np.array([0.04, 0.65])
 		# if self.num == 5:
 		# 	self.num = 0
