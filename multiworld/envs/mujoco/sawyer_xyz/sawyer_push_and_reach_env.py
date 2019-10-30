@@ -10,7 +10,7 @@ from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.envs.mujoco.sawyer_xyz.base import SawyerXYZEnv
 import PIL.Image as Image
 import mujoco_py
-from pyquaternion import Quaternion
+import  multiworld.envs.mujoco.sawyer_xyz.transform_utils as tu
 
 class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 	def __init__(
@@ -89,14 +89,19 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			np.hstack((self.hand_high, puck_high)),
 			dtype=np.float32
 		)
+		
+		# Whether to return observations in absolute frame or relative frame
+		self.use_absolute_frame = False
+		self.observation_size = 7 #Set this to 9 for absolute frame
 
 		self.hand_and_puck_orientation_space = Box(
 			# np.hstack((self.hand_low, puck_low, -np.ones(9))),
 			# np.hstack((self.hand_high, puck_high, np.ones(9))),
-			-np.ones(6),
-			np.ones(6),
+			-np.ones(self.observation_size),
+			np.ones(self.observation_size),
 			dtype=np.float32
 		)
+
 		self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
 		self.observation_space = Dict([
 			#('observation', self.hand_and_puck_space),
@@ -135,10 +140,6 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		# if not os.path.exists(self.log_dir):
 			# os.makedirs(self.log_dir)
 
-		# Whether to return observations in absolute frame or relative frame
-		self.use_absolute_frame = False
-		self.observation_size = 6 #Set this to 9 for absolute frame
-
 		self.reset()
 
 	def viewer_setup(self):
@@ -154,13 +155,32 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 	def step(self, action, render=False):
 		# obj_size = self.sim.model.geom_size[self.sim.model.geom_name2id('puckbox')]
 		# print('obj_size',obj_size)
-		low = np.ones(2) * -0.1
-		high = np.ones(2) * 0.1
-		action = np.clip(action, low, high)
-		delta_z = self.hand_z_position - self.data.m(ocap_pos[0, 2])
-		action = np.hstack(action, delta_z, np.array([1]))
-		action_world = np.matmul(r_end_eff, action)
-		self.set_xyz_action(action_world)
+
+		# import pdb; pdb.set_trace()
+
+		# puck_pos_in_world = self.data.get_body_xpos('puck')
+		# puck_rot_in_world = self.data.get_body_xmat('puck')
+		# puck_pose_in_world = tu.make_pose(puck_pos_in_world, puck_rot_in_world)
+
+		# # Compute R_inv for gripper in world frame
+		# # R_inv = R.T - R.T*t
+		# hand_pos_in_world = self.data.get_body_xpos('hand')
+		# hand_rot_in_world = self.data.get_body_xmat('hand')
+		# hand_pose_in_world = tu.make_pose(hand_pos_in_world, hand_rot_in_world)
+		# world_pose_in_hand = tu.pose_inv(hand_pose_in_world)
+
+		# puck_pose_in_hand = tu.pose_in_A_to_pose_in_B(puck_pose_in_world, world_pose_in_hand)
+
+		# low = np.ones(2) * -0.1
+		# high = np.ones(2) * 0.1
+		# action_ = np.clip(action[:2], low, high)
+		# delta_z = self.hand_z_position - self.data.mocap_pos[0, 2]
+		# action_ = np.hstack([action_, delta_z, np.array([1])])
+		# action_world = np.matmul(r_end_eff, action_)
+		# action_world =  np.hstack((action_world, action[2]))
+		# self.set_xyz_action(action_world)
+
+		self.set_xyz_action(action)
 
 		u = None
 		self.do_simulation(u)
@@ -198,34 +218,53 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			# convert everything to end effector frame
 
 			# First get rotation matrix for object in world frame
-			m = self.data.get_body_xmat('puck')
-			v = self.data.get_body_xpos('puck')
-			rot = np.concatenate((m, v[:, np.newaxis]),axis=1)
-			z = np.zeros((4,1))
-			z[3] = 1
-			r_obj = np.concatenate((rot, z.T), axis=0)
+			# m = self.data.get_body_xmat('puck')
+			# v = self.data.get_body_xpos('puck')
+			# rot = np.concatenate((m, v[:, np.newaxis]),axis=1)
+			# z = np.zeros((4,1))
+			# z[3] = 1
+			# r_obj = np.concatenate((rot, z.T), axis=0)
+
+			# # Compute R_inv for gripper in world frame
+			# # R_inv = R.T - R.T*t
+			# rot = self.data.get_body_xmat('hand')
+			# t = self.data.get_body_xpos('hand')
+			# rot = np.concatenate((rot.T, -np.matmul(rot.T, t)[:, np.newaxis]),axis=1)
+			# z = np.zeros((4,1))
+			# z[3] = 1
+			# r_end_eff = np.concatenate((rot, z.T), axis=0)
+
+			# r_obj_to_endeff = np.matmul(r_obj, r_end_eff)
+
+			# pos = self.get_puck_pos()
+			# obj_pos = np.pad(pos, pad_width=1)[1:]
+			# obj_pos_end_eff = np.matmul(r_obj_to_endeff, obj_pos)[:2]
+
+			# obj_orientation =  Quaternion(matrix=r_obj_to_endeff).elements
+
+			# #o_flatten = r_obj_to_endeff[:3,:3].flatten()
+
+			# flat_obs_orientation = np.concatenate((obj_pos_end_eff, obj_orientation))
+
+			puck_pos_in_world = self.data.get_body_xpos('puck')
+			puck_rot_in_world = self.data.get_body_xmat('puck')
+			puck_pose_in_world = tu.make_pose(puck_pos_in_world, puck_rot_in_world)
 
 			# Compute R_inv for gripper in world frame
 			# R_inv = R.T - R.T*t
-			rot = self.data.get_body_xmat('hand')
-			t = self.data.get_body_xpos('hand')
-			rot = np.concatenate((rot.T, -np.matmul(rot.T, t)[:, np.newaxis]),axis=1)
-			z = np.zeros((4,1))
-			z[3] = 1
-			r_end_eff = np.concatenate((rot, z.T), axis=0)
+			hand_pos_in_world = self.data.get_body_xpos('hand')
+			hand_rot_in_world = self.data.get_body_xmat('hand')
+			hand_pose_in_world = tu.make_pose(hand_pos_in_world, hand_rot_in_world)
+			world_pose_in_hand = tu.pose_inv(hand_pose_in_world)
 
-			r_obj_to_endeff = np.matmul(r_obj, r_end_eff)
+			puck_pose_in_hand = tu.pose_in_A_to_pose_in_B(puck_pose_in_world, world_pose_in_hand)
 
-			pos = self.get_puck_pos()
-			obj_pos = np.pad(pos, pad_width=1)[1:]
-			obj_pos_end_eff = np.matmul(r_obj_to_endeff, obj_pos)[:2]
-
-			obj_orientation =  Quaternion(matrix=r_obj_to_endeff).elements
+			puck_pos_in_hand = puck_pose_in_hand[:3, 3]
+			puck_or_in_hand =  tu.mat2quat(puck_pose_in_hand[:3, :3])
 
 			#o_flatten = r_obj_to_endeff[:3,:3].flatten()
 
-			flat_obs_orientation = np.concatenate((obj_pos_end_eff, obj_orientation))
-
+			flat_obs_orientation = np.concatenate((puck_pos_in_hand, puck_or_in_hand))
 
 			e = self.get_endeff_pos()
 			b = self.get_puck_pos()[:2]
@@ -638,7 +677,7 @@ class SawyerPushAndReachXYEnv(SawyerPushAndReachXYZEnv):
 
 		self.hand_and_puck_space = Box(hand_and_puck_low, hand_and_puck_high, dtype=np.float32)
 		# self.hand_and_puck_orientation_space  = Box(np.hstack((hand_and_puck_low,-np.ones(9))), np.hstack(( hand_and_puck_high,np.ones(9))),  dtype=np.float32)
-		self.hand_and_puck_orientation_space  = Box(-np.ones(6), np.ones(6),  dtype=np.float32)
+		self.hand_and_puck_orientation_space  = Box(-np.ones(self.observation_size), np.ones(self.observation_size),  dtype=np.float32)
 
 		self.observation_space = Dict([
 			#('observation', self.hand_and_puck_space),
