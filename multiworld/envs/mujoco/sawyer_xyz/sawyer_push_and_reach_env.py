@@ -258,21 +258,44 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			world_pose_in_hand = tu.pose_inv(hand_pose_in_world)
 
 			puck_pose_in_hand = tu.pose_in_A_to_pose_in_B(puck_pose_in_world, world_pose_in_hand)
+			hand_in_puck = tu.pose_inv(puck_pose_in_hand)
+			hand_pos_in_puck = hand_in_puck[:3, 3]
+			hand_or_in_puck =  tu.mat2quat(hand_in_puck[:3, :3])
+
+
 
 			puck_pos_in_hand = puck_pose_in_hand[:3, 3]
 			puck_or_in_hand =  tu.mat2quat(puck_pose_in_hand[:3, :3])
 
 			#o_flatten = r_obj_to_endeff[:3,:3].flatten()
+			world_in_puck = tu.pose_inv(puck_pose_in_world)
+			handpos_in_world = self.data.get_body_xpos('hand')
+			handpos_in_world = np.concatenate((handpos_in_world,np.array([1])))
+
+			acheive_hand = world_in_puck.dot(handpos_in_world)[:3]
 
 			flat_obs_orientation = np.concatenate((puck_pos_in_hand, puck_or_in_hand))
 
+			flat_obs_puckcenter = np.concatenate((hand_pos_in_puck, hand_or_in_puck))
+
+
 			e = self.get_endeff_pos()
 			b = self.get_puck_pos()[:2]
+			simple_obs = e - self.get_puck_pos()
 			flat_obs = np.concatenate((e, b))
+			hand_goal_world = np.concatenate((self._state_goal[:3],np.array([1])))
+			puck_goal_world = np.concatenate((self._state_goal[3:],np.array([0,1])))
+
+			hand_goal_puck = world_in_puck.dot(hand_goal_world)[:3]
+			puck_goal_puck = world_in_puck.dot(puck_goal_world)[:2]
+			flat_obs_rel = np.concatenate((acheive_hand, np.array([0,0])))
+			desired_goal_puck = np.concatenate((hand_goal_puck, puck_goal_puck))
+
+			flat_obs_puck_with_ori = np.concatenate((hand_pos_in_puck, self.data.get_body_xquat('puck')))
 
 		return dict(
 			#observation=flat_obs,
-			observation=flat_obs_orientation,
+			observation=flat_obs_puck_with_ori,
 			# desired_goal=self._state_goal,
 			# achieved_goal=flat_obs,
 			# state_observation=flat_obs,
@@ -468,14 +491,14 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
 		# step = 0
 
-		#while (dist_to_goal<=2*self.indicator_threshold or dist_to_goal>=3*self.indicator_threshold):
-		#	goal = self.sample_goal()
-		#	hand_goal_xy = goal['state_desired_goal'][:2]
-		#	puck_goal_xy = goal['state_desired_goal'][3:]
-		#	dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
-		#	dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
+		while (dist_to_goal<=2*self.indicator_threshold or dist_to_goal>=3*self.indicator_threshold):
+			goal = self.sample_goal()
+			hand_goal_xy = goal['state_desired_goal'][:2]
+			puck_goal_xy = goal['state_desired_goal'][3:]
+			dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
+			dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
 
-		goal['state_desired_goal'][3:] = np.array([0.04, 0.65])
+		# goal['state_desired_goal'][3:] = np.array([0.04, 0.65])
 		# if self.num == 5:
 		# 	self.num = 0
 
