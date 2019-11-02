@@ -10,7 +10,7 @@ from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.envs.mujoco.sawyer_xyz.base import SawyerXYZEnv
 import PIL.Image as Image
 import mujoco_py
-import  multiworld.envs.mujoco.sawyer_xyz.transform_utils as tu
+import copy
 
 class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 	def __init__(
@@ -89,22 +89,14 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			np.hstack((self.hand_high, puck_high)),
 			dtype=np.float32
 		)
-		
-		# Whether to return observations in absolute frame or relative frame
-		self.use_absolute_frame = False
-		self.use_translation_invariance = False
-		self.use_total_invariance = True
-		self.observation_size = 15 #Set this to 9 for absolute frame
-
 
 		self.hand_and_puck_orientation_space = Box(
 			# np.hstack((self.hand_low, puck_low, -np.ones(9))),
 			# np.hstack((self.hand_high, puck_high, np.ones(9))),
-			-np.ones(self.observation_size),
-			np.ones(self.observation_size),
+			-np.ones(9),
+			np.ones(9),
 			dtype=np.float32
 		)
-
 		self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
 		self.observation_space = Dict([
 			#('observation', self.hand_and_puck_space),
@@ -139,10 +131,19 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.num = 0
 		self.time_step = 1
 		self.another_timestep = 1
+
 		# self.log_dir = "/projects/katefgroup/yunchu/mujoco_imgs"
 		# if not os.path.exists(self.log_dir):
 			# os.makedirs(self.log_dir)
 
+		self.use_intermediate_goals = False
+		self.intermediate_goals = None
+		self.final_goal = None
+		self.start_goal = None
+		self.goals_reached = None
+		self.last_goal = None 
+		self.last_start = None
+		
 		self.reset()
 
 	def viewer_setup(self):
@@ -159,39 +160,15 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		# obj_size = self.sim.model.geom_size[self.sim.model.geom_name2id('puckbox')]
 		# print('obj_size',obj_size)
 
-		# import pdb; pdb.set_trace()
-
-		# puck_pos_in_world = self.data.get_body_xpos('puck')
-		# puck_rot_in_world = self.data.get_body_xmat('puck')
-		# puck_pose_in_world = tu.make_pose(puck_pos_in_world, puck_rot_in_world)
-
-		# # Compute R_inv for gripper in world frame
-		# # R_inv = R.T - R.T*t
-		# hand_pos_in_world = self.data.get_body_xpos('hand')
-		# hand_rot_in_world = self.data.get_body_xmat('hand')
-		# hand_pose_in_world = tu.make_pose(hand_pos_in_world, hand_rot_in_world)
-		# world_pose_in_hand = tu.pose_inv(hand_pose_in_world)
-
-		# puck_pose_in_hand = tu.pose_in_A_to_pose_in_B(puck_pose_in_world, world_pose_in_hand)
-
-		# low = np.ones(2) * -0.1
-		# high = np.ones(2) * 0.1
-		# action_ = np.clip(action[:2], low, high)
-		# delta_z = self.hand_z_position - self.data.mocap_pos[0, 2]
-		# action_ = np.hstack([action_, delta_z, np.array([1])])
-		# action_world = np.matmul(r_end_eff, action_)
-		# action_world =  np.hstack((action_world, action[2]))
-		# self.set_xyz_action(action_world)
-
 		self.set_xyz_action(action)
-
 		u = None
 		self.do_simulation(u)
 		if self.clamp_puck_on_step:
 			curr_puck_pos = self.get_puck_pos()[:2]
 			curr_puck_pos = np.clip(curr_puck_pos, self.puck_space.low, self.puck_space.high)
 			self._set_puck_xy(curr_puck_pos)
-		self._set_goal_marker(self._state_goal)
+		# print("Final Goal ", self.final_goal['state_desired_goal'])
+		self._set_goal_marker(self.final_goal['state_desired_goal'])
 		ob = self._get_obs()
 
 		reward, _ = self.compute_reward(ob['achieved_goal'], ob['desired_goal'])
@@ -210,114 +187,20 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		return ob, reward, done, info
 
 	def _get_obs(self):
+		e = self.get_endeff_pos()
+		b = self.get_puck_pos()[:2]
+		o = self.get_puck_orientation()
+		flat_obs = np.concatenate((e, b))
+		flat_obs_orientation = np.concatenate((flat_obs, o))
 
-		if self.use_absolute_frame:
-			e = self.get_endeff_pos()
-			b = self.get_puck_pos()[:2]
-			o = self.get_puck_orientation()
-			flat_obs = np.concatenate((e, b))
-			flat_obs_orientation = np.concatenate((flat_obs, o))
-		elif self.use_translation_invariance:
-			# Uses object centric transformations
-			puck_pos_in_world = self.data.get_body_xpos('puck')
-			hand_pos_in_world = self.data.get_body_xpos('hand')
-			
-			hand_pos_in_puck = hand_pos_in_world - puck_pos_in_world
-
-			hand_or_in_world = self.data.get_body_xquat('hand')
-
-			hand_goal_in_world = self._state_goal[:3]
-			puck_goal_in_world = np.concatenate((self._state_goal[3:],np.array([0])))
-
-			flat_obs_rel = np.concatenate((hand_pos_in_puck, np.array([0,0])))
-
-			hand_goal_in_puck = hand_goal_in_world - puck_pos_in_world
-			puck_goal_in_puck = puck_goal_in_world - puck_pos_in_world
-
-			desired_goal_in_puck = np.concatenate((hand_goal_in_puck, puck_goal_in_puck[:2]))
-
-			flat_obs_puck_with_ori = np.concatenate((hand_pos_in_puck, hand_or_in_world, flat_obs_rel[:-2], desired_goal_in_puck))
-
-		elif self.use_total_invariance: #rotation + translational
-			puck_pos_in_world = self.data.get_body_xpos('puck')
-			puck_rot_in_world = self.data.get_body_xmat('puck')
-			puck_pose_in_world = tu.make_pose(puck_pos_in_world, puck_rot_in_world)
-
-			# Compute R_inv for gripper in world frame
-			# R_inv = R.T - R.T*t
-			hand_pos_in_world = self.data.get_body_xpos('hand')
-			hand_rot_in_world = self.data.get_body_xmat('hand')
-			hand_pose_in_world = tu.make_pose(hand_pos_in_world, hand_rot_in_world)
-
-			world_pose_in_hand = tu.pose_inv(hand_pose_in_world)
-
-			puck_pose_in_hand = tu.pose_in_A_to_pose_in_B(puck_pose_in_world, world_pose_in_hand)
-			puck_pos_in_hand = puck_pose_in_hand[:3, 3]
-			puck_or_in_hand =  tu.mat2quat(puck_pose_in_hand[:3, :3])
-
-			hand_pose_in_puck = tu.pose_inv(puck_pose_in_hand)
-			hand_pos_in_puck = hand_pose_in_puck[:3, 3]
-			hand_or_in_puck =  tu.mat2quat(hand_pose_in_puck[:3, :3])
-
-			world_pose_in_puck = tu.pose_inv(puck_pose_in_world)
-
-			hand_goal_in_world = np.concatenate((self._state_goal[:3],np.array([1])))
-			puck_goal_in_world = np.concatenate((self._state_goal[3:],np.array([0,1])))
-
-			hand_goal_in_puck = world_pose_in_puck.dot(hand_goal_in_world)[:3]
-			puck_goal_in_puck = world_pose_in_puck.dot(puck_goal_in_world)[:2]
-
-			flat_obs_rel = np.concatenate((hand_pos_in_puck, np.array([0,0])))
-			desired_goal_in_puck = np.concatenate((hand_goal_in_puck, puck_goal_in_puck))
-
-			flat_obs_puck_with_ori = np.concatenate((hand_pos_in_puck, hand_or_in_puck, desired_goal_in_puck, flat_obs_rel[:3]))
-		else:
-			# convert everything to end effector frame
-			puck_pos_in_world = self.data.get_body_xpos('puck')
-			puck_rot_in_world = self.data.get_body_xmat('puck')
-			puck_pose_in_world = tu.make_pose(puck_pos_in_world, puck_rot_in_world)
-
-			# Compute R_inv for gripper in world frame
-			# R_inv = R.T - R.T*t
-			hand_pos_in_world = self.data.get_body_xpos('hand')
-			hand_rot_in_world = self.data.get_body_xmat('hand')
-			hand_pose_in_world = tu.make_pose(hand_pos_in_world, hand_rot_in_world)
-
-			world_pose_in_hand = tu.pose_inv(hand_pose_in_world)
-
-			puck_pose_in_hand = tu.pose_in_A_to_pose_in_B(puck_pose_in_world, world_pose_in_hand)
-			puck_pos_in_hand = puck_pose_in_hand[:3, 3]
-			puck_or_in_hand =  tu.mat2quat(puck_pose_in_hand[:3, :3])
-
-			hand_pose_in_puck = tu.pose_inv(puck_pose_in_hand)
-			hand_pos_in_puck = hand_pose_in_puck[:3, 3]
-			hand_or_in_puck =  tu.mat2quat(hand_pose_in_puck[:3, :3])
-
-			world_pose_in_puck = tu.pose_inv(puck_pose_in_world)
-
-			# e = self.get_endeff_pos()
-			# b = self.get_puck_pos()[:2]
-			# simple_obs = e - self.get_puck_pos()
-			# flat_obs = np.concatenate((e, b))
-
-			hand_goal_in_world = np.concatenate((self._state_goal[:3],np.array([1])))
-			puck_goal_in_world = np.concatenate((self._state_goal[3:],np.array([0,1])))
-
-			hand_goal_in_puck = world_pose_in_puck.dot(hand_goal_in_world)[:3]
-			puck_goal_in_puck = world_pose_in_puck.dot(puck_goal_in_world)[:2]
-
-			flat_obs_rel = np.concatenate((hand_pos_in_puck, np.array([0,0])))
-			desired_goal_in_puck = np.concatenate((hand_goal_in_puck, puck_goal_in_puck))
-
-			flat_obs_puck_with_ori = np.concatenate((hand_pos_in_puck, self.data.get_body_xquat('puck'), desired_goal_in_puck, flat_obs_rel[:3]))
 		return dict(
 			#observation=flat_obs,
-			observation=flat_obs_puck_with_ori,
+			observation=flat_obs_orientation,
 			# desired_goal=self._state_goal,
 			# achieved_goal=flat_obs,
 			# state_observation=flat_obs,
-			desired_goal=desired_goal_in_puck,
-			achieved_goal=flat_obs_rel,
+			desired_goal=self._state_goal,
+			achieved_goal=flat_obs,
 			# proprio_observation=flat_obs[:3],
 			# proprio_desired_goal=self._state_goal[:3],
 			# proprio_achieved_goal=flat_obs[:3],
@@ -389,13 +272,14 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		
 
 	def sample_puck_xy(self):
-		return np.array([0, 0.6])
-		#init_puck  = np.random.uniform(
-		#        self.goal_low[3:],
-		#        self.goal_high[3:],
-		#        size=self.goal_low[3:].size,
-		#    )
-		#return init_puck
+		# return np.array([0, 0.6])
+		# import ipdb;ipdb.set_trace()
+		init_puck  = np.random.uniform(
+		        self.goal_low[3:],
+		        self.goal_high[3:],
+		        size=self.goal_low[3:].size,
+		    )
+		return init_puck
 
 	def _set_goal_marker(self, goal):
 		"""
@@ -433,15 +317,42 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
 	def reset_model(self):
 		self._reset_hand()
-		if not self.reset_free:
-			self._set_puck_xy(self.sample_puck_xy())
+		# import pdb; pdb.set_trace()
 
-		if not (self.puck_space.contains(self.get_puck_pos()[:2])):
-			self._set_puck_xy(self.sample_puck_xy())
+		puck_goal_xy = None
+		puck_start_xy = None
+		if self.use_intermediate_goals:
+			for idx, val in enumerate(self.goals_reached):
+				# TODO: Remember to set intermediate_goals[idx] to True in compute rewards once goal is reached.
+				if not val:
+					break
+				puck_start_xy = self.intermediate_goals[idx]
 
+		print("\n Reset Model Called! ", puck_start_xy)
+		if self.use_intermediate_goals and puck_start_xy is not None:
+			self._set_puck_xy(np.array(puck_start_xy))
+		else:
+			self.start_goal = copy.deepcopy(self.sample_puck_xy())
+			if not self.reset_free:
+				self._set_puck_xy(self.start_goal)
+
+			if not (self.puck_space.contains(self.get_puck_pos()[:2])):
+				self.start_goal = copy.deepcopy(self.sample_puck_xy())
+				self._set_puck_xy(self.start_goal)
+
+		# Note that sample valid goal return the final goal by default
+		# We need to explicitly set the intermediate goals, if any
 		goal = self.sample_valid_goal()
+		
+		# If we have reached all intermediate goals, set use_intermediate goals to false
+		if self.goals_reached is not None and self.goals_reached[-1]:
+			self.use_intermediate_goals = False
+			goal = self.final_goal
+
 		self.set_goal(goal)
-		self.reset_counter += 1
+		if np.linalg.norm(goal['state_desired_goal'] - self.final_goal['state_desired_goal']) < self.indicator_threshold: 
+				#increment the reset counter only when you reach the final goal
+			self.reset_counter += 1
 		self.reset_mocap_welds()
 		return self._get_obs()
 
@@ -491,54 +402,77 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self._set_puck_xy(puck_goal)
 		self.sim.forward()
 
+	# Returns the first intermediate goal or final goal
 	def sample_valid_goal(self):
-		goal = self.sample_goal()
-		# for the simple case alternate between the two goals
-		# self.num = 1 -self.num
-		# if self.num>0.5:
-		# goal['state_desired_goal'][3:] = np.array([0.1, 0.7])
-		#     #print(self.num, "goal1")
-		# else:
-		#     goal['state_desired_goal'][3:] = np.array([0.1, 0.51])
-		#     #print(self.num, "goal2")
-		hand_goal_xy = goal['state_desired_goal'][:2]
-		puck_goal_xy = goal['state_desired_goal'][3:]
-		puck_xy = self.get_puck_pos()[:2]
-		dist = np.linalg.norm(hand_goal_xy-puck_goal_xy)
-		dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
-		# step = 0
-
-		while (dist_to_goal<=2*self.indicator_threshold or dist_to_goal>=3*self.indicator_threshold):
+		# If we are not using intermediate goals
+		if not self.use_intermediate_goals:
 			goal = self.sample_goal()
+
 			hand_goal_xy = goal['state_desired_goal'][:2]
 			puck_goal_xy = goal['state_desired_goal'][3:]
-			dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
+			puck_xy = self.get_puck_pos()[:2]
+			dist = np.linalg.norm(hand_goal_xy-puck_goal_xy)
 			dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
 
-		# goal['state_desired_goal'][3:] = np.array([0.04, 0.65])
-		# if self.num == 5:
-		# 	self.num = 0
+			while (dist_to_goal <= 2*self.indicator_threshold):
+				goal = self.sample_goal()
+				hand_goal_xy = goal['state_desired_goal'][:2]
+				puck_goal_xy = goal['state_desired_goal'][3:]
+				dist = np.linalg.norm(hand_goal_xy - puck_goal_xy)
+				dist_to_goal = np.linalg.norm(puck_xy-puck_goal_xy)
 
-		# if self.num == 0:
-		# 	goal['state_desired_goal'][3:] = np.array([0.04, 0.65])
+			self.final_goal = copy.deepcopy(goal)
 
-		# if self.num == 1:
-		# 	goal['state_desired_goal'][3:] = np.array([0.05, 0.65])
-
-		# if self.num == 2:
-		# 	goal['state_desired_goal'][3:] = np.array([-0.05, 0.63])
-
-		# if self.num == 3:
-		# 	goal['state_desired_goal'][3:] = np.array([-0.045, 0.67])
-
-		# if self.num == 4:
-		# 	goal['state_desired_goal'][3:] = np.array([0.045,0.66])
-
-
-		# self.num = self.num + 1
-
-
+			#introduce way points
+			if dist_to_goal > 3*self.indicator_threshold:
+				self.use_intermediate_goals = True
+				self.intermediate_goals = self.get_intermediate_goals(puck_xy[0], puck_xy[1], puck_goal_xy[0], puck_goal_xy[1])
+				self.goals_reached = [False]*len(self.intermediate_goals)
+		else:
+			# We are in middle of traversing intermediate goals to reach a final goal
+			goal = copy.deepcopy(self.final_goal)
+			for idx, val in enumerate(self.goals_reached):
+				# TODO: Remember to set intermediate_goals[idx] to True in compute rewards once goal is reached.
+				if not val:
+					puck_goal_xy = self.intermediate_goals[idx]
+					goal['state_desired_goal'][3] = puck_goal_xy[0]
+					goal['state_desired_goal'][4] = puck_goal_xy[1]
+					break
+		print("Final goal ", self.final_goal)
+		print("Intermediate goals ", self.intermediate_goals)
+		print("Goals reached ", self.goals_reached)
+		print("Returning goal ", goal)
 		return goal
+
+	# x1, y1 are start locations, x2, y2 are goals
+	def get_intermediate_goals(self, x1, y1, x2, y2, r=3*0.02): # indicator threshold is 0.02
+		goals = []
+		slope = (y2-y1)/(x2-x1)
+		dist_to_goal = np.sqrt((x2-x1)**2 + (y2-y1)**2)
+		st_x = x1
+		st_y = y1
+		while dist_to_goal > r:
+			pos_x = st_x + r/np.sqrt(1 + slope **2)
+			pos_y = st_y + slope * (pos_x - st_x)
+
+			neg_x = st_x - r/np.sqrt(1 + slope **2)
+			neg_y = st_y + slope * (neg_x - st_x)
+
+			dist_pos = np.sqrt((x2-pos_x)**2 + (y2-pos_y)**2)
+			dist_neg = np.sqrt((x2-neg_x)**2 + (y2-neg_y)**2)
+
+			x = pos_x
+			y = pos_y
+			if dist_pos > dist_neg:
+				x = neg_x
+				y = neg_y
+
+			goals.append([x, y])
+
+			dist_to_goal = np.sqrt((x2-x)**2 + (y2-y)**2)
+			st_x = x
+			st_y = y
+		return goals
 
 	def sample_goals(self, batch_size):
 		if self.fix_goal:
@@ -622,7 +556,21 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			# else:
 			# 	r = np.array([-1.0])
 			r = -(puck_distances > self.indicator_threshold).astype(float)
-
+			if r == 0:
+				if self.use_intermediate_goals:
+					print("Reached an intermediate goal")
+					if self.goals_reached[0] == False:
+						self.goals_reached[0] = True
+					else:
+						for idx, val in enumerate(self.goals_reached):
+							# TODO: Remember to set intermediate_goals[idx] to True in compute rewards once goal is reached.
+							if not val:
+								self.goals_reached[idx] = True
+								break
+					print("Goals reached ", self.goals_reached)
+					self.reset()
+				else:
+					print("Final Goal Reached!")
 			# r =  -5 * (1 - np.tanh(0.1*puck_distances)) 
 			done = puck_distances < self.indicator_threshold
 			# r = -(hand_distances > self.indicator_threshold).astype(float)
@@ -717,19 +665,12 @@ class SawyerPushAndReachXYEnv(SawyerPushAndReachXYZEnv):
 
 		self.hand_and_puck_space = Box(hand_and_puck_low, hand_and_puck_high, dtype=np.float32)
 		# self.hand_and_puck_orientation_space  = Box(np.hstack((hand_and_puck_low,-np.ones(9))), np.hstack(( hand_and_puck_high,np.ones(9))),  dtype=np.float32)
-		self.hand_and_puck_orientation_space  = Box(-np.ones(self.observation_size), np.ones(self.observation_size),  dtype=np.float32)
+		self.hand_and_puck_orientation_space  = Box(-np.ones(9), np.ones(9),  dtype=np.float32)
 
 		self.observation_space = Dict([
-			#('observation', self.hand_and_puck_space),
 			('observation', self.hand_and_puck_orientation_space),
-			# ('desired_goal', self.hand_and_puck_space),
-			# ('achieved_goal', self.hand_and_puck_space),
-			# ('state_observation', self.hand_and_puck_space),
 			('desired_goal', self.hand_and_puck_space),
 			('achieved_goal', self.hand_and_puck_space),
-			# ('proprio_observation', self.hand_space),
-			# ('proprio_desired_goal', self.hand_space),
-			# ('proprio_achieved_goal', self.hand_space),
 		])
 
 	def step(self, action):
