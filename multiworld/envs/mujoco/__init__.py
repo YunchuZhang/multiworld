@@ -819,8 +819,7 @@ def create_multicamera_push_easy(normalize=False,
 
 
 
-def create_multicamera_push_random_objects(normalize=False,
-                                           track_object=False,
+def create_multicamera_push_random_objects(track_object=False,
                                            dist_low=0.7,
                                            dist_high=1.5,
                                            angle_low=0,
@@ -828,7 +827,8 @@ def create_multicamera_push_random_objects(normalize=False,
                                            elev_low=-180,
                                            elev_high=-90,
                                            num_cameras=4,
-                                           xml_paths=None):
+                                           xml_paths=None,
+                                           **kwargs):
 
     from multiworld.core.image_env import ImageEnv
     from multiworld.envs.mujoco.cameras import init_multiple_cameras
@@ -844,7 +844,6 @@ def create_multicamera_push_random_objects(normalize=False,
         return ImageEnv(
             wrapped_env=gym.make('SawyerPushRandomObjects-v0', reward_type='puck_success', xml_paths=xml_paths),
             imsize=64,
-            normalize=normalize,
             camera_space=camera_space,
             init_camera=(lambda x: init_multiple_cameras(x, camera_space)),
             num_cameras=num_cameras,
@@ -852,13 +851,13 @@ def create_multicamera_push_random_objects(normalize=False,
             cam_info=True,
             track_object=track_object,
             reward_type='wrapped_env',
-            flatten=False
+            flatten=False,
+            **kwargs
         )
     else:
         return ImageEnv(
             wrapped_env=gym.make('SawyerPushRandomObjects-v0', reward_type='puck_success'),
             imsize=64,
-            normalize=normalize,
             camera_space=camera_space,
             init_camera=(lambda x: init_multiple_cameras(x, camera_space)),
             num_cameras=num_cameras,
@@ -866,6 +865,7 @@ def create_multicamera_push_random_objects(normalize=False,
             cam_info=True,
             track_object=track_object,
             reward_type='wrapped_env',
-            flatten=False
+            flatten=False,
+            **kwargs,
         )
         

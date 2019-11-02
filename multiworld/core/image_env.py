@@ -39,6 +39,8 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             non_presampled_goal_img_is_garbage=False,
             recompute_reward=True,
             enable_goal_rendering=False,
+            get_discovery_feats=False,
+            crop_discovery_feats=False,
     ):
         """
 
@@ -76,6 +78,8 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         self.recompute_reward = recompute_reward
         self.non_presampled_goal_img_is_garbage = non_presampled_goal_img_is_garbage
         self.enable_goal_rendering = enable_goal_rendering
+        self.get_discovery_feats = get_discovery_feats
+        self.crop_discovery_feats = crop_discovery_feats
 
         if image_length is not None:
             self.image_length = image_length
@@ -268,6 +272,21 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             obs['image_proprio_achieved_goal'] = np.concatenate(
                 (obs['image_achieved_goal'], obs['proprio_achieved_goal'])
             )
+
+        if self.get_discovery_feats:
+            from discovery.backend.mujoco_online_inputs import get_inputs
+            import discovery.hyperparams as hyp
+
+            assert(hyp.S == self.num_cameras)
+            if self.crop_discovery_feats:
+                assert('full_state_observation' in obs)
+                discov_fields = get_inputs(obs['image_observation'], obs['depth_observation'], obs['cam_info_observation'], obs['full_state_observation'])
+            else:
+                discov_fields = get_inputs(obs['image_observation'], obs['depth_observation'], obs['cam_info_observation'])
+
+            for key, value in discov_fields.items():
+                obs[key] = value[0]
+            
         return obs
 
 
