@@ -92,7 +92,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		
 		# Whether to return observations in absolute frame or relative frame
 		self.use_absolute_frame = False
-		self.observation_size = 17 #Set this to 9 for absolute frame
+		self.observation_size = 9 #Set this to 9 for absolute frame
 
 		self.hand_and_puck_orientation_space = Box(
 			# np.hstack((self.hand_low, puck_low, -np.ones(9))),
@@ -126,6 +126,10 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
 		self.init_puck_z = init_puck_z
 		self.init_hand_xyz = np.array(init_hand_xyz)
+
+		self.start_frame = np.array([-0.15,0.65])
+		self.init_hand_xyz = np.array([self.start_frame[0],self.start_frame[1]-0.1,0.07])
+
 		self._set_puck_xy(self.sample_puck_xy())
 		self.reset_free = reset_free
 		self.reset_counter = 0
@@ -136,6 +140,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.num = 0
 		self.time_step = 1
 		self.another_timestep = 1
+		
 		# self.log_dir = "/projects/katefgroup/yunchu/mujoco_imgs"
 		# if not os.path.exists(self.log_dir):
 			# os.makedirs(self.log_dir)
@@ -216,58 +221,61 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			flat_obs_orientation = np.concatenate((flat_obs, o))
 		else:
 			# convert everything to end effector frame
-			puck_pos_in_world = self.data.get_body_xpos('puck')
-			puck_rot_in_world = self.data.get_body_xmat('puck')
-			puck_pose_in_world = tu.make_pose(puck_pos_in_world, puck_rot_in_world)
+			# puck_pos_in_world = self.data.get_body_xpos('puck')
+			# puck_rot_in_world = self.data.get_body_xmat('puck')
+			# puck_pose_in_world = tu.make_pose(puck_pos_in_world, puck_rot_in_world)
 
-			# Compute R_inv for gripper in world frame
-			# R_inv = R.T - R.T*t
-			hand_pos_in_world = self.data.get_body_xpos('hand')
-			hand_rot_in_world = self.data.get_body_xmat('hand')
-			hand_pose_in_world = tu.make_pose(hand_pos_in_world, hand_rot_in_world)
+			# # Compute R_inv for gripper in world frame
+			# # R_inv = R.T - R.T*t
+			# hand_pos_in_world = self.data.get_body_xpos('hand')
+			# hand_rot_in_world = self.data.get_body_xmat('hand')
+			# hand_pose_in_world = tu.make_pose(hand_pos_in_world, hand_rot_in_world)
 
-			world_pose_in_hand = tu.pose_inv(hand_pose_in_world)
+			# world_pose_in_hand = tu.pose_inv(hand_pose_in_world)
 
-			puck_pose_in_hand = tu.pose_in_A_to_pose_in_B(puck_pose_in_world, world_pose_in_hand)
-			puck_pos_in_hand = puck_pose_in_hand[:3, 3]
-			puck_or_in_hand =  tu.mat2quat(puck_pose_in_hand[:3, :3])
+			# puck_pose_in_hand = tu.pose_in_A_to_pose_in_B(puck_pose_in_world, world_pose_in_hand)
+			# puck_pos_in_hand = puck_pose_in_hand[:3, 3]
+			# puck_or_in_hand =  tu.mat2quat(puck_pose_in_hand[:3, :3])
 
-			hand_pose_in_puck = tu.pose_inv(puck_pose_in_hand)
-			hand_pos_in_puck = hand_pose_in_puck[:3, 3]
-			hand_or_in_puck =  tu.mat2quat(hand_pose_in_puck[:3, :3])
+			# hand_pose_in_puck = tu.pose_inv(puck_pose_in_hand)
+			# hand_pos_in_puck = hand_pose_in_puck[:3, 3]
+			# hand_or_in_puck =  tu.mat2quat(hand_pose_in_puck[:3, :3])
 
-			world_pose_in_puck = tu.pose_inv(puck_pose_in_world)
+			# world_pose_in_puck = tu.pose_inv(puck_pose_in_world)
 
-			flat_obs_orientation = np.concatenate((puck_pos_in_hand, puck_or_in_hand))
-			flat_obs_puckcenter = np.concatenate((hand_pos_in_puck, hand_or_in_puck))
+			# flat_obs_orientation = np.concatenate((puck_pos_in_hand, puck_or_in_hand))
+			# flat_obs_puckcenter = np.concatenate((hand_pos_in_puck, hand_or_in_puck))
 
+			start_frame = np.concatenate((self.start_frame,np.array([0])))
 
 			e = self.get_endeff_pos()
 			b = self.get_puck_pos()[:2]
 			simple_obs = e - self.get_puck_pos()
 			flat_obs = np.concatenate((e, b))
 
-			hand_goal_world = np.concatenate((self._state_goal[:3],np.array([1])))
-			puck_goal_world = np.concatenate((self._state_goal[3:],np.array([0,1])))
+			# hand_goal_world = np.concatenate((self._state_goal[:3],np.array([1])))
+			# puck_goal_world = np.concatenate((self._state_goal[3:],np.array([0,1])))
 
-			hand_goal_in_puck = world_pose_in_puck.dot(hand_goal_world)[:3]
-			puck_goal_in_puck = world_pose_in_puck.dot(puck_goal_world)[:2]
+			# hand_goal_in_puck = world_pose_in_puck.dot(hand_goal_world)[:3]
+			# puck_goal_in_puck = world_pose_in_puck.dot(puck_goal_world)[:2]
 
-			flat_obs_rel = np.concatenate((hand_pos_in_puck, np.array([0,0])))
-			desired_goal_puck = np.concatenate((hand_goal_in_puck, puck_goal_in_puck))
 
-			flat_obs_puck_with_ori = np.concatenate((hand_pos_in_puck, self.data.get_body_xquat('puck')))
-			flat_obs_puck_with_ori = np.concatenate((flat_obs_puck_with_ori, desired_goal_puck))
-			flat_obs_puck_with_ori = np.concatenate((flat_obs_puck_with_ori, flat_obs_rel))
+			# flat_obs_rel = np.concatenate((hand_pos_in_puck, np.array([0,0])))
+			# desired_goal_puck = np.concatenate((hand_goal_in_puck, puck_goal_in_puck))
 
+			flat_obs_puck_with_ori = np.concatenate((e - start_frame,b - self.start_frame,self.data.get_body_xquat('puck')))
+			# flat_obs_puck_with_ori = np.concatenate((flat_obs_puck_with_ori, desired_goal_puck))
+			# flat_obs_puck_with_ori = np.concatenate((flat_obs_puck_with_ori, flat_obs_rel))
 		return dict(
 			#observation=flat_obs,
 			observation=flat_obs_puck_with_ori,
 			# desired_goal=self._state_goal,
 			# achieved_goal=flat_obs,
 			# state_observation=flat_obs,
-			desired_goal=desired_goal_puck,
-			achieved_goal=flat_obs_rel,
+			desired_goal=np.concatenate((self._state_goal[:3] - start_frame,self._state_goal[3:] - self.start_frame)),
+			# desired_goal_puck,
+			achieved_goal=np.concatenate((e - start_frame,b - self.start_frame))
+			# flat_obs_rel,
 			# proprio_observation=flat_obs[:3],
 			# proprio_desired_goal=self._state_goal[:3],
 			# proprio_achieved_goal=flat_obs[:3],
@@ -339,7 +347,8 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		
 
 	def sample_puck_xy(self):
-		return np.array([0, 0.6])
+		# return np.array([0, 0.6])
+		return self.start_frame
 		#init_puck  = np.random.uniform(
 		#        self.goal_low[3:],
 		#        self.goal_high[3:],
