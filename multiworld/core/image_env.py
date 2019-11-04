@@ -132,6 +132,19 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             spaces['cam_info_observation'] = cam_space
             spaces['cam_info_goal'] = cam_space
 
+
+        if self.get_discovery_feats:
+            import discovery.hyperparams as hyp
+
+            assert(hyp.S == self.num_cameras)
+
+            cam_matrix_shape = (self.num_cameras, 4, 4)
+            spaces['pix_T_cams'] = Box(float('-inf'), float('inf'), cam_matrix_shape, dtype=np.float32)
+            spaces['origin_T_camRs'] = Box(float('-inf'), float('inf'), cam_matrix_shape, dtype=np.float32)
+            spaces['origin_T_camXs'] = Box(float('-inf'), float('inf'), cam_matrix_shape, dtype=np.float32)
+            spaces['rgb_camXs'] = img_space
+            spaces['xyz_camXs'] = Box(0.0, float('inf'), (self.num_cameras, hyp.V, 3), dtype=np.float32)
+
         self.return_image_proprio = False
         #TODO: Figure out what's going on here
         #if 'proprio_observation' in spaces.keys():
@@ -275,17 +288,23 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
         if self.get_discovery_feats:
             from discovery.backend.mujoco_online_inputs import get_inputs
-            import discovery.hyperparams as hyp
 
-            assert(hyp.S == self.num_cameras)
+            if not self.normalize:
+                image_scaling = 255.0
+            else:
+                image_scaling = 1
+
             if self.crop_discovery_feats:
                 assert('full_state_observation' in obs)
-                discov_fields = get_inputs(obs['image_observation'], obs['depth_observation'], obs['cam_info_observation'], obs['full_state_observation'])
+                discov_fields = get_inputs(obs['image_observation'] / image_scaling, obs['depth_observation'], obs['cam_info_observation'], obs['full_state_observation'])
             else:
-                discov_fields = get_inputs(obs['image_observation'], obs['depth_observation'], obs['cam_info_observation'])
+                discov_fields = get_inputs(obs['image_observation'] / image_scaling, obs['depth_observation'], obs['cam_info_observation'])
 
             for key, value in discov_fields.items():
-                obs[key] = value[0]
+                if not self.normalize and key == 'rgb_camXs':
+                    obs[key] = (value[0] * 255).astype(np.uint8)
+                else:
+                    obs[key] = value[0]
             
         return obs
 
