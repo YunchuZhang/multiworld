@@ -36,7 +36,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             image_length=None,
             presampled_goals=None,
             non_presampled_goal_img_is_garbage=False,
-            recompute_reward=True,
+            recompute_reward=False,
     ):
         """
 
@@ -182,7 +182,8 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         obs, reward, done, info = self.wrapped_env.step(action)
         new_obs = self._update_obs(obs)
         if self.recompute_reward:
-            reward, done = self.compute_reward(action, new_obs)
+            # reward, done = self.compute_reward(action, new_obs)
+            reward, _ = self.compute_reward(new_obs['achieved_goal'], new_obs['desired_goal'])
         self._update_info(info, obs)
         return new_obs, reward, done, info
 
@@ -223,7 +224,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
             # Goal rendering is used for visualization, image goal is used
             # for learning/acting
-            self._goal_rendering = self.wrapped_env.render(mode='human')
+            self._goal_rendering = self.wrapped_env.render(mode='rgb_array')
             self._img_goal, self._img_goal_depth = self._get_img()
             self.goal_cam_info = self.wrapped_env.get_camera_info()
 
@@ -376,16 +377,16 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         return goals
 
 
-    def compute_rewards(self, actions, obs):
-        achieved_goals = obs['achieved_goal']
-        desired_goals = obs['desired_goal']
-        dist = np.linalg.norm(achieved_goals - desired_goals, axis=1)
+    def compute_rewards(self, achieved_goal, desired_goal):
+        achieved_goals = achieved_goal
+        desired_goals = desired_goal
+        # dist = np.linalg.norm(achieved_goals - desired_goals, axis=1)
         if self.reward_type=='image_distance':
             return -dist
         elif self.reward_type=='image_sparse':
             return -(dist > self.threshold).astype(float)
         elif self.reward_type=='wrapped_env':
-            return self.wrapped_env.compute_rewards(actions, obs)
+            return self.wrapped_env.compute_rewards(achieved_goals, desired_goals)
         else:
             raise NotImplementedError()
 

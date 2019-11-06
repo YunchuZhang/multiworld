@@ -127,7 +127,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		self.init_puck_z = init_puck_z
 		self.init_hand_xyz = np.array(init_hand_xyz)
 
-		self.start_frame = np.array([-0.15,0.65])
+		self.start_frame = np.array([0,0.6])
 		self.init_hand_xyz = np.array([self.start_frame[0],self.start_frame[1]-0.1,0.07])
 
 		self._set_puck_xy(self.sample_puck_xy())
@@ -252,6 +252,8 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			b = self.get_puck_pos()[:2]
 			simple_obs = e - self.get_puck_pos()
 			flat_obs = np.concatenate((e, b))
+			o = self.data.get_body_xmat('puck').flatten().copy()
+			flat_obs_orientation = np.concatenate((flat_obs, o))
 
 			# hand_goal_world = np.concatenate((self._state_goal[:3],np.array([1])))
 			# puck_goal_world = np.concatenate((self._state_goal[3:],np.array([0,1])))
@@ -269,6 +271,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		return dict(
 			#observation=flat_obs,
 			observation=flat_obs_puck_with_ori,
+			observation_with_orientation=flat_obs_orientation,
 			# desired_goal=self._state_goal,
 			# achieved_goal=flat_obs,
 			# state_observation=flat_obs,
