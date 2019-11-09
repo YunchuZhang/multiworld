@@ -276,16 +276,16 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         if self.get_discovery_feats:
             from discovery.backend.mujoco_online_inputs import get_inputs
 
-            if not self.normalize:
+            if self.normalize:
                 image_scaling = 255.0
             else:
-                image_scaling = 1.0
+                image_scaling = 1
 
             if self.crop_discovery_feats:
                 assert('full_state_observation' in obs)
-                discov_fields = get_inputs(img_obs / image_scaling, depths, obs['cam_info_observation'], obs['full_state_observation'])
+                discov_fields = get_inputs(img_obs * image_scaling, depths, obs['cam_info_observation'], obs['full_state_observation'])
             else:
-                discov_fields = get_inputs(img_obs / image_scaling, depths, obs['cam_info_observation'])
+                discov_fields = get_inputs(img_obs * image_scaling, depths, obs['cam_info_observation'])
 
             for key, value in discov_fields.items():
                 if not self.normalize and key == 'rgb_camXs':
@@ -338,7 +338,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             image_obs = np.array(image_obs)
 
         if self.normalize:
-            image_obs = image_obs / 255.0
+            image_obs = (image_obs / 255.0)
 
         # Changes from (H, W, C) to (C, W, H)
         if self.transpose:
