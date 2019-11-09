@@ -842,7 +842,7 @@ def create_multicamera_push_random_objects(track_object=False,
 
     if xml_paths:
         return ImageEnv(
-            wrapped_env=gym.make('SawyerPushRandomObjects-v0', reward_type='puck_success', xml_paths=xml_paths),
+            wrapped_env=gym.make('SawyerPushRandomObjects-v0', reward_type='puck_success', xml_paths=xml_paths, clamp_puck_on_step=False),
             imsize=64,
             camera_space=camera_space,
             init_camera=(lambda x: init_multiple_cameras(x, camera_space)),
@@ -856,7 +856,7 @@ def create_multicamera_push_random_objects(track_object=False,
         )
     else:
         return ImageEnv(
-            wrapped_env=gym.make('SawyerPushRandomObjects-v0', reward_type='puck_success'),
+            wrapped_env=gym.make('SawyerPushRandomObjects-v0', reward_type='puck_success', clamp_puck_on_step=False),
             imsize=64,
             camera_space=camera_space,
             init_camera=(lambda x: init_multiple_cameras(x, camera_space)),

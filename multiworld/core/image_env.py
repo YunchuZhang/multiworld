@@ -203,7 +203,8 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
         # st()
         if self.recompute_reward:
             reward = self.compute_reward(action, new_obs)
-        self._update_info(info, obs)
+        if not self.get_discovery_feats:
+            self._update_info(info, obs)
         return new_obs, reward, done, info
 
     def _update_info(self, info, obs):
