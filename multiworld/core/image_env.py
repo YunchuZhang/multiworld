@@ -111,18 +111,6 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
         self._img_goal = img_space.sample() #has to be done for presampling
         spaces = self.wrapped_env.observation_space.spaces.copy()
-        spaces['image_observation'] = img_space
-        spaces['image_desired_goal'] = img_space
-        spaces['image_achieved_goal'] = img_space
-
-        if self.depth:
-            depth_space_shape = np.array([self.num_cameras, self.imsize, self.imsize])
-            depth_space_shape = np.delete(depth_space_shape, np.argwhere(depth_space_shape == 1))
-
-            depth_space = Box(0, float('inf'), depth_space_shape, dtype=np.float32)
-            # st()
-            spaces['depth_observation'] = depth_space
-            spaces['depth_desired_goal'] = depth_space
 
         if self.cam_info:
 
@@ -144,6 +132,22 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             spaces['origin_T_camXs'] = Box(float('-inf'), float('inf'), cam_matrix_shape, dtype=np.float32)
             spaces['rgb_camXs'] = img_space
             spaces['xyz_camXs'] = Box(0.0, float('inf'), (self.num_cameras, hyp.V, 3), dtype=np.float32)
+
+        else:
+
+            spaces['image_observation'] = img_space
+            spaces['image_desired_goal'] = img_space
+            spaces['image_achieved_goal'] = img_space
+
+            if self.depth:
+                depth_space_shape = np.array([self.num_cameras, self.imsize, self.imsize])
+                depth_space_shape = np.delete(depth_space_shape, np.argwhere(depth_space_shape == 1))
+
+                depth_space = Box(0, float('inf'), depth_space_shape, dtype=np.float32)
+                # st()
+                spaces['depth_observation'] = depth_space
+                spaces['depth_desired_goal'] = depth_space
+            
 
         self.return_image_proprio = False
         #TODO: Figure out what's going on here
@@ -262,29 +266,11 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
     def _update_obs(self, obs):
         img_obs, depths = self._get_img()
-        obs['image_observation'] = img_obs
-
-        if self.depth:
-            obs['depth_observation'] = depths
 
         if self.cam_info:
             obs['cam_info_observation'] = self.wrapped_env.get_camera_info()
 
-        obs['image_desired_goal'] = self._img_goal
-        obs['image_achieved_goal'] = img_obs
-        obs['depth_desired_goal'] = self._img_goal_depth
         obs['cam_info_goal'] = self.goal_cam_info
-
-        if self.return_image_proprio:
-            obs['image_proprio_observation'] = np.concatenate(
-                (obs['image_observation'], obs['proprio_observation'])
-            )
-            obs['image_proprio_desired_goal'] = np.concatenate(
-                (obs['image_desired_goal'], obs['proprio_desired_goal'])
-            )
-            obs['image_proprio_achieved_goal'] = np.concatenate(
-                (obs['image_achieved_goal'], obs['proprio_achieved_goal'])
-            )
 
         if self.get_discovery_feats:
             from discovery.backend.mujoco_online_inputs import get_inputs
@@ -292,20 +278,41 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             if not self.normalize:
                 image_scaling = 255.0
             else:
-                image_scaling = 1
+                image_scaling = 1.0
 
             if self.crop_discovery_feats:
                 assert('full_state_observation' in obs)
-                discov_fields = get_inputs(obs['image_observation'] / image_scaling, obs['depth_observation'], obs['cam_info_observation'], obs['full_state_observation'])
+                discov_fields = get_inputs(img_obs / image_scaling, depths, obs['cam_info_observation'], obs['full_state_observation'])
             else:
-                discov_fields = get_inputs(obs['image_observation'] / image_scaling, obs['depth_observation'], obs['cam_info_observation'])
+                discov_fields = get_inputs(img_obs / image_scaling, depths, obs['cam_info_observation'])
 
             for key, value in discov_fields.items():
                 if not self.normalize and key == 'rgb_camXs':
-                    obs[key] = (value[0] * 255).astype(np.uint8)
+                    # Undo normalization for smaller representation
+                    obs[key] = ((value[0] + 0.5) * 255).astype(np.uint8)
                 else:
                     obs[key] = value[0]
-            
+        else:
+            obs['image_observation'] = img_obs
+
+            obs['image_desired_goal'] = self._img_goal
+            obs['image_achieved_goal'] = img_obs
+
+            if self.return_image_proprio:
+                obs['image_proprio_observation'] = np.concatenate(
+                    (obs['image_observation'], obs['proprio_observation'])
+                )
+                obs['image_proprio_desired_goal'] = np.concatenate(
+                    (obs['image_desired_goal'], obs['proprio_desired_goal'])
+                )
+                obs['image_proprio_achieved_goal'] = np.concatenate(
+                    (obs['image_achieved_goal'], obs['proprio_achieved_goal'])
+                )
+
+            if self.depth:
+                obs['depth_observation'] = depths
+                obs['depth_desired_goal'] = self._img_goal_depth
+
         return obs
 
 
