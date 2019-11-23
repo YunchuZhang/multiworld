@@ -133,6 +133,10 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             spaces['rgb_camXs'] = img_space
             spaces['xyz_camXs'] = Box(0.0, float('inf'), (self.num_cameras, hyp.V, 3), dtype=np.float32)
 
+            if self.crop_discovery_feats:
+                spaces['crop_center_xyz_camRs'] = Box(float('-inf'), float('inf'), (1, 3), dtype=np.float32)
+                spaces['camRs_T_crop'] = Box(float('-inf'), float('inf'), (1, 3, 3), dtype=np.float32)
+
         else:
 
             spaces['image_observation'] = img_space
