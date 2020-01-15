@@ -11,9 +11,9 @@ from multiworld.envs.mujoco.sawyer_xyz.base import SawyerXYZEnv
 class SawyerReachXYZEnv(SawyerXYZEnv, MultitaskEnv):
     def __init__(
             self,
-            reward_type='hand_distance',
+            reward_type='hand_success',
             norm_order=1,
-            indicator_threshold=0.06,
+            indicator_threshold=0.02,
 
             fix_goal=False,
             fixed_goal=(0.15, 0.6, 0.3),
@@ -46,6 +46,10 @@ class SawyerReachXYZEnv(SawyerXYZEnv, MultitaskEnv):
             ('proprio_desired_goal', self.hand_space),
             ('proprio_achieved_goal', self.hand_space),
         ])
+
+        self.start_frame = np.array([0.1,0.7])
+        self.init_hand_xyz = np.array([self.start_frame[0],self.start_frame[1]-0.1,0.07])
+
         self.reset()
 
     def step(self, action):
@@ -55,23 +59,24 @@ class SawyerReachXYZEnv(SawyerXYZEnv, MultitaskEnv):
         # The marker seems to get reset every time you do a simulation
         self._set_goal_marker(self._state_goal)
         ob = self._get_obs()
-        reward = self.compute_reward(action, ob)
+        reward = self.compute_reward(ob['achieved_goal'], ob['desired_goal'])
         info = self._get_info()
         done = False
         return ob, reward, done, info
 
     def _get_obs(self):
+        start_frame = np.concatenate((self.start_frame,np.array([0])))
         flat_obs = self.get_endeff_pos()
         return dict(
-            observation=flat_obs,
-            desired_goal=self._state_goal,
-            achieved_goal=flat_obs,
-            state_observation=flat_obs,
-            state_desired_goal=self._state_goal,
-            state_achieved_goal=flat_obs,
-            proprio_observation=flat_obs,
-            proprio_desired_goal=self._state_goal,
-            proprio_achieved_goal=flat_obs,
+            observation=flat_obs-start_frame,
+            desired_goal=self._state_goal-start_frame,
+            achieved_goal=flat_obs-start_frame
+            # state_observation=flat_obs,
+            # state_desired_goal=self._state_goal,
+            # state_achieved_goal=flat_obs,
+            # proprio_observation=flat_obs,
+            # proprio_desired_goal=self._state_goal,
+            # proprio_achieved_goal=flat_obs,
         )
 
     def _get_info(self):
@@ -119,13 +124,14 @@ class SawyerReachXYZEnv(SawyerXYZEnv, MultitaskEnv):
         angles[:7] = [1.7244448, -0.92036369,  0.10234232,  2.11178144,  2.97668632, -0.38664629, 0.54065733]
         self.set_state(angles.flatten(), velocities.flatten())
         self._reset_hand()
-        self.set_goal(self.sample_goal())
+        goal = self.sample_valid_goal()
+        self.set_goal(goal)
         self.sim.forward()
         return self._get_obs()
 
     def _reset_hand(self):
         for _ in range(10):
-            self.data.set_mocap_pos('mocap', np.array([0, 0.5, 0.02]))
+            self.data.set_mocap_pos('mocap', self.init_hand_xyz.copy())
             self.data.set_mocap_quat('mocap', np.array([1, 0, 1, 0]))
             self.do_simulation(None, self.frame_skip)
 
@@ -150,6 +156,25 @@ class SawyerReachXYZEnv(SawyerXYZEnv, MultitaskEnv):
             # keep gripper closed
             self.do_simulation(np.array([1]))
 
+    def sample_valid_goal(self):
+        goal = self.sample_goal()
+        
+        hand_goal = goal['state_desired_goal']
+       
+        hand_diff = hand_goal - self.get_endeff_pos()
+        goal_xyz = self.get_endeff_pos()
+        # hand_distance = np.linalg.norm(hand_diff, ord=self.norm_order)
+        # hand_distance_l1 = np.linalg.norm(hand_diff, ord=1)
+        hand_distance_l2 = np.linalg.norm(hand_diff,ord=2)
+
+        while (hand_distance_l2<=2*self.indicator_threshold or hand_distance_l2>=8*self.indicator_threshold):
+            goal = self.sample_goal()
+            hand_goal = goal['state_desired_goal']
+            hand_distance_l2 = np.linalg.norm(hand_goal-goal_xyz,ord=2)
+        # goal['desired_goal'] = np.array([0.0, 0.7, 0.25])
+        # goal['state_desired_goal'] = np.array([0.0, 0.7, 0.25])
+        return goal
+
     def sample_goals(self, batch_size):
         if self.fix_goal:
             goals = np.repeat(
@@ -168,9 +193,17 @@ class SawyerReachXYZEnv(SawyerXYZEnv, MultitaskEnv):
             'state_desired_goal': goals,
         }
 
-    def compute_rewards(self, actions, obs):
-        achieved_goals = obs['state_achieved_goal']
-        desired_goals = obs['state_desired_goal']
+    def compute_rewards(self, achieved_goal, desired_goal):
+        # import ipdb;ipdb.set_trace()
+        if achieved_goal.shape[0] == 3:
+            achieved_goal = np.reshape(achieved_goal,(1,3))
+            desired_goal = np.reshape(desired_goal,(1,3))
+
+        achieved_goals = achieved_goal
+        desired_goals = desired_goal #(batch_size, 3)
+
+        # achieved_goals = obs['state_achieved_goal']
+        # desired_goals = obs['state_desired_goal']
         hand_pos = achieved_goals
         goals = desired_goals
         hand_diff = hand_pos - goals
