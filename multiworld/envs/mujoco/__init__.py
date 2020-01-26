@@ -49,6 +49,21 @@ def register_mujoco_envs():
     )
 
     register(
+        id='Sawyerpenmug-v0',
+        entry_point='multiworld.envs.mujoco.sawyer_xyz.sawyer_penmug:Sawyerpenmugtask',
+        tags={
+            'author': 'yunchu'
+        },
+        kwargs=dict(
+            hand_low=(-0.35, 0.2, 0.05),
+            hand_high=(0.35, .9, 0.3),
+            hide_goal_markers=False,
+            norm_order=2,
+        ),
+        max_episode_steps=100,
+    )
+
+    register(
         id='SawyerReachXYZEnv-v1',
         entry_point='multiworld.envs.mujoco.sawyer_xyz.sawyer_reach:SawyerReachXYZEnv',
         tags={

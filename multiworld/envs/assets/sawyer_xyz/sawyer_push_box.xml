@@ -1,7 +1,7 @@
 <mujoco>
   <include file="shared_config.xml" />
   <worldbody>
-    <include file="sawyer_xyz_base_pusher.xml" />
+    <include file="sawyer_xyz_base.xml" />
         <body name="puck" pos="0 0 0.1">
             <joint limited="false" name="puckjoint" type="free" />
             <geom friction="0.005 0.004 .001" mass="2.7" mesh="mouse" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />

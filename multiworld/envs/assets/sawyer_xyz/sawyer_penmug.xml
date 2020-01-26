@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+	<include file="shared_config.xml"></include>
+	<worldbody>
+		<include file="sawyer_xyz_base.xml"></include>
+        <body name="puck1" pos="0 0 .1">
+            <joint name="puckjoint" type="free" limited='false' damping="1" armature="0" />
+            <inertial pos="0 0 0" mass=".1" diaginertia=".001 .001 .001"/>
+            <geom name="puckbox"
+                  type="cylinder"
+                  pos="0 0 0"
+                  size="0.008 0.03"
+                  rgba=".9 .1 .1 1"
+                  contype="6"
+                  conaffinity="6"
+                  friction=".1 .005 .0001"
+            />
+            
+        </body>
+
+        <body name="puck2" pos="0.4 0 0.1">
+            <joint limited="false" name="puck2joint" type="free" />
+            <geom contype="6" conaffinity="6" friction="0.005 0.004 .001" mass="0.31" mesh="mug1" name="puckbox2" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
+
+        </body>
+
+
+        <site name="hand-goal-site" pos="0 0 0.02" size="0.01"
+              rgba="1 0.5 0.5 0.5"/>
+        <site name="puck1-goal-site" pos="0 0 0.02" size="0.01"
+              rgba="0 0 1 0.5"/>
+        <site name="puck2-goal-site" pos="0 0 0.02" size="0.01"
+              rgba="0 1 0 0.5"/>
+	</worldbody>
+    <actuator>
+       <motor gear="100" joint="rc_close"  />
+    </actuator>
+</mujoco>
