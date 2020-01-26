@@ -15,7 +15,7 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
             obj_low=None,
             obj_high=None,
 
-            reward_type='hand_and_obj_distance',
+            reward_type='hand_and_obj_success',
             indicator_threshold=0.06,
 
             obj_init_positions=((0, 0.6, 0.02),),
@@ -154,7 +154,7 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
         # The marker seems to get reset every time you do a simulation
         self._set_goal_marker(self._state_goal)
         ob = self._get_obs()
-        reward = self.compute_reward(action, ob)
+        reward = self.compute_reward(ob['achieved_goal'], ob['desired_goal'])
         info = self._get_info()
         done = False
         return ob, reward, done, info
@@ -162,6 +162,7 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
     def _get_obs(self):
         e = self.get_endeff_pos()
         b = self.get_obj_pos()
+        # o = self.data.get_body_xquat('obj').flatten().copy()
         gripper = self.get_gripper_pos()
         flat_obs = np.concatenate((e, b))
         flat_obs_with_gripper = np.concatenate((gripper, e, b))
@@ -316,10 +317,18 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
         }
         return sampled_goals
 
+    def compute_rewards(self, achieved_goal, desired_goal):
 
-    def compute_rewards(self, actions, obs):
-        achieved_goals = obs['state_achieved_goal']
-        desired_goals = obs['state_desired_goal']
+
+
+        if achieved_goal.shape[0] == 6:
+            achieved_goal = np.reshape(achieved_goal,(1,6))
+            desired_goal = np.reshape(desired_goal,(1,6))
+
+        achieved_goals = achieved_goal
+        desired_goals = desired_goal #(batch_size, 3)
+
+
         hand_pos = achieved_goals[:, :3]
         obj_pos = achieved_goals[:, 3:]
         hand_goals = desired_goals[:, :3]
@@ -345,7 +354,7 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
             r = -touch_and_obj_distances
         elif self.reward_type == 'hand_and_obj_success':
             r = -(
-                hand_and_obj_distances < self.indicator_threshold
+                hand_and_obj_distances > self.indicator_threshold
             ).astype(float)
         elif self.reward_type == 'touch_distance':
             r = -touch_distances

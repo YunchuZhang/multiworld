@@ -34,11 +34,13 @@ Usage:
         <mesh name="can1" file="can1.stl" />
         <mesh name="car1" file="car1.stl" />
         <mesh name="car2" file="car2.stl" />
+        <mesh name="car22" file="car22.stl" />
         <mesh name="car3" file="car3.stl" />
         <mesh name="car4" file="car4.stl" />
         <mesh name="hat1" file="hat1.stl" />
         <mesh name="hat2" file="hat2.stl" />
         <mesh name="mug1" file="mug1.stl" />
+        <mesh name="mug12" file="mug12.stl" />
         <mesh name="mug2" file="mug2.stl" />
         <mesh name="mug3" file="mug3.stl" />
         <mesh name="mouse" file="mouse.stl" />
@@ -46,6 +48,7 @@ Usage:
         <mesh name="coffee_mug" file="coffee_mug.stl" />
         <mesh name="boat2" file="boat2.stl" />
         <mesh name="headphones" file="headphones.stl" />
+        <mesh name="headphones2" file="headphones2.stl" />
         <mesh name="ball" file="ball.stl" />
         <mesh name="eyeglass" file="eyeglass.stl" />
         <mesh name="plane" file="plane.stl" />
@@ -56,9 +59,12 @@ Usage:
         <mesh name="bag2" file="bag2.stl" />
         <mesh name="bag22" file="bag22.stl" />
         <mesh name="keyboard" file="keyboard.stl" />
+        <mesh name="keyboard2" file="keyboard2.stl" />
         <mesh name="knife" file="knife.stl" />
         <mesh name="knife2" file="knife2.stl" />
         <mesh name="pillow" file="pillow.stl" />
+        <mesh name="hamet2" file="hamet2.stl" />
+        <mesh name="mouse2" file="mouse2.stl" />
         <mesh name="printer" file="printer.stl" />        
     </asset>
 

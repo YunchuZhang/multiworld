@@ -3,7 +3,7 @@
     <include file="shared_config.xml"></include>
     <worldbody>
         <include file="sawyer_xyz_base.xml"></include>
-        <body name="obj" pos="0 0 0.1">
+<!--         <body name="obj" pos="0 0 0.1">
             <joint name="objjoint" type="free" limited='false' damping="0" armature="0" />
             <inertial pos="0 0 0" mass="1" diaginertia="100000 100000 100000"/>
             <geom name="objbox" type="box" pos="0 0 0"
@@ -19,6 +19,12 @@
         </body>
 
             <site name="obj" pos="0 .0 0" size="0.035" rgba="0.0 0.0 1.0 1"/>
+        </body> -->
+        <!-- physics_dict["mouse"] = ["2.7", ".00027 .00025 .00016", "1.5 0.5 .000001"] -->
+        <body name="obj" pos="0 0 0.1">
+            <joint limited="false" name="puckjoint" type="free" />
+            <geom contype="6" conaffinity="6" friction="0.005 0.004 .001" mass="2.7" mesh="mouse2" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh"/>
+
         </body>
 
         <site name="hand-goal-site" pos="0 0 0" size="0.01"
