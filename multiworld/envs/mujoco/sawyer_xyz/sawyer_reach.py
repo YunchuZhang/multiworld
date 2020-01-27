@@ -48,18 +48,18 @@ class SawyerReachXYZEnv(SawyerXYZEnv, MultitaskEnv):
         ])
 
         self.start_frame = np.array([0.1,0.7])
-        self.init_hand_xyz = np.array([self.start_frame[0],self.start_frame[1]-0.1,0.07])
+        self.init_hand_xyz = np.array([self.start_frame[0],self.start_frame[1]-0.1,0.06])
 
         self.reset()
 
     def step(self, action):
         self.set_xyz_action(action)
-        # keep gripper closed
+        # keep gripper opened
         self.do_simulation(np.array([1]))
         # The marker seems to get reset every time you do a simulation
         self._set_goal_marker(self._state_goal)
         ob = self._get_obs()
-        reward = self.compute_reward(ob['achieved_goal'], ob['desired_goal'])
+        reward = self.compute_reward(action,ob)
         info = self._get_info()
         done = False
         return ob, reward, done, info
@@ -193,17 +193,10 @@ class SawyerReachXYZEnv(SawyerXYZEnv, MultitaskEnv):
             'state_desired_goal': goals,
         }
 
-    def compute_rewards(self, achieved_goal, desired_goal):
-        # import ipdb;ipdb.set_trace()
-        if achieved_goal.shape[0] == 3:
-            achieved_goal = np.reshape(achieved_goal,(1,3))
-            desired_goal = np.reshape(desired_goal,(1,3))
+    def compute_rewards(self, actions, obs):    
+        achieved_goals = obs['achieved_goal'] 
+        desired_goals = obs['desired_goal']
 
-        achieved_goals = achieved_goal
-        desired_goals = desired_goal #(batch_size, 3)
-
-        # achieved_goals = obs['state_achieved_goal']
-        # desired_goals = obs['state_desired_goal']
         hand_pos = achieved_goals
         goals = desired_goals
         hand_diff = hand_pos - goals

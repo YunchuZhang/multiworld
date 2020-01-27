@@ -46,10 +46,10 @@ class Sawyerpenmugtask(SawyerXYZEnv, MultitaskEnv):
             ('proprio_desired_goal', self.hand_space),
             ('proprio_achieved_goal', self.hand_space),
         ])
-        self.init_puck_z = 0.02
+        self.init_puck_z = 0.05
         self._always_start_on_same_side = True
         self.start_frame = np.array([0.1,0.7])
-        self.init_hand_xyz = np.array([self.start_frame[0],self.start_frame[1]-0.1,0.02])
+        self.init_hand_xyz = np.array([self.start_frame[0],self.start_frame[1]-0.1,0.05])
 
         self.reset()
 

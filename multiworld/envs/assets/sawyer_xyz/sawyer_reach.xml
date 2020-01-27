@@ -6,5 +6,7 @@
         <site name="hand-goal-site" pos="0 0 0" size="0.01"
 			  rgba="0.5 0.5 1 0.5"/>
 	</worldbody>
-    <actuator></actuator>
+    <actuator>
+       <motor gear="100" joint="rc_close"  />
+    </actuator>
 </mujoco>

@@ -154,7 +154,7 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
         # The marker seems to get reset every time you do a simulation
         self._set_goal_marker(self._state_goal)
         ob = self._get_obs()
-        reward = self.compute_reward(ob['achieved_goal'], ob['desired_goal'])
+        reward = self.compute_reward(action,ob)
         info = self._get_info()
         done = False
         return ob, reward, done, info
@@ -317,18 +317,9 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
         }
         return sampled_goals
 
-    def compute_rewards(self, achieved_goal, desired_goal):
-
-
-
-        if achieved_goal.shape[0] == 6:
-            achieved_goal = np.reshape(achieved_goal,(1,6))
-            desired_goal = np.reshape(desired_goal,(1,6))
-
-        achieved_goals = achieved_goal
-        desired_goals = desired_goal #(batch_size, 3)
-
-
+    def compute_rewards(self, actions, obs):
+        achieved_goals = obs['state_achieved_goal']
+        desired_goals = obs['state_desired_goal']
         hand_pos = achieved_goals[:, :3]
         obj_pos = achieved_goals[:, 3:]
         hand_goals = desired_goals[:, :3]
