@@ -42,6 +42,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			clamp_puck_on_step=False,
 
 			puck_radius=.07,
+			z_rotation_angle=0,
 			**kwargs
 	):
 		# self._max_episode_steps = 20
@@ -101,7 +102,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			np.ones(self.observation_size),
 			dtype=np.float32
 		)
-
+		self.z_rotation_angle = z_rotation_angle
 		self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
 		self.observation_space = Dict([
 			#('observation', self.hand_and_puck_space),
@@ -386,10 +387,11 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		WARNING: this resets the sites (because set_state resets sights do).
 		"""
 		# import ipdb;ipdb.set_trace()
+		rot_angle = self.z_rotation_angle
 		qpos = self.data.qpos.flat.copy()
 		qvel = self.data.qvel.flat.copy()
 		qpos[7:10] = np.hstack((pos.copy(), np.array([self.init_puck_z])))
-		qpos[10:14] = np.array([1, 0, 0, 0])
+		qpos[10:14] = np.array([np.cos(rot_angle/2), 0, 0, np.sin(rot_angle/2)])#np.array([1, 0, 0, 0])
 		qvel[self.jnt_qvel_addr['puckjoint'][0]:self.jnt_qvel_addr['puckjoint'][1]] = 0
 		self.set_state(qpos, qvel)
 
