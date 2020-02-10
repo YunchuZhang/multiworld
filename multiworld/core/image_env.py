@@ -224,7 +224,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
 
             # Goal rendering is used for visualization, image goal is used
             # for learning/acting
-            self._goal_rendering = self.wrapped_env.render(mode='rgb_array')
+            self._goal_rendering = self.wrapped_env.render(mode='human')
             self._img_goal, self._img_goal_depth = self._get_img()
             self.goal_cam_info = self.wrapped_env.get_camera_info()
 

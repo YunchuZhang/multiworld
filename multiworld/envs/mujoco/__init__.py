@@ -39,10 +39,13 @@ def register_mujoco_envs():
             'git-commit-hash': '7b3113b',
             'author': 'vitchyr'
         },
-        kwargs={
-            'hide_goal_markers': False,
-            'norm_order': 2,
-        },
+        kwargs=dict(
+            hand_low=(-0.35, 0.2, 0.05),
+            hand_high=(0.35, .9, 0.3),
+            hide_goal_markers=False,
+            norm_order=2,
+        ),
+        max_episode_steps=30,
     )
 
     register(
@@ -422,7 +425,8 @@ def register_mujoco_envs():
             action_scale=0.02,
             hide_goal_markers=True,
             num_goals_presampled=1000,
-        )
+        ),
+        max_episode_steps=50,
 
     )
     register(
