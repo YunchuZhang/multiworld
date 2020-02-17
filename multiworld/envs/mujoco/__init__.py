@@ -424,6 +424,7 @@ def register_mujoco_envs():
             hand_high=(0.0, 0.65, 0.3),
             action_scale=0.02,
             hide_goal_markers=True,
+            xml_path='sawyer_xyz/sawyer_push_puck.xml',
             num_goals_presampled=1000,
         ),
         max_episode_steps=50,

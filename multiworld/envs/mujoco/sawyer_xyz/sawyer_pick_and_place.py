@@ -16,9 +16,9 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
             obj_high=None,
 
             reward_type='hand_and_obj_success',
-            indicator_threshold=0.06,
+            indicator_threshold=0.02,
 
-            obj_init_positions=((0, 0.6, 0.02),),
+            obj_init_positions=((0, 0.6, 0.03),),
             random_init=False,
 
             fix_goal=False,
@@ -26,6 +26,7 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
             goal_low=None,
             goal_high=None,
             reset_free=False,
+            xml_path='sawyer_xyz/sawyer_push_box.xml',
 
             hide_goal_markers=False,
             oracle_reset_prob=0.0,
@@ -36,6 +37,7 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
             **kwargs
     ):
         self.quick_init(locals())
+        self.model_name=get_asset_full_path(xml_path)
         MultitaskEnv.__init__(self)
         SawyerXYZEnv.__init__(
             self,
@@ -48,6 +50,7 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
             obj_high = self.hand_high
         self.obj_low = obj_low
         self.obj_high = obj_high
+
         if goal_low is None:
             goal_low = np.hstack((self.hand_low, obj_low))
         if goal_high is None:
@@ -118,8 +121,8 @@ class SawyerPickAndPlaceEnv(MultitaskEnv, SawyerXYZEnv):
         self.reset()
 
     @property
-    def model_name(self):
-        return get_asset_full_path('sawyer_xyz/sawyer_pick_and_place.xml')
+    # def model_name(self):
+    #     return get_asset_full_path(self.xml_path)
 
     def mode(self, name):
         if 'train' not in name:

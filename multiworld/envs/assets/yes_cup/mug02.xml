@@ -1,0 +1,35 @@
+<mujoco>
+  <asset>
+      <texture file="../../textures/ceramic.png" name="tex-ceramic" />
+      <material name="ceramic" reflectance="0.5" texrepeat="1 1" texture="tex-ceramic" texuniform="true" />
+  <mesh file="../meshes/03797390/c39fb75015184c2a0c7f097b1a1f7a5/models/model_normalized.stl" name="cup" scale="1 1 1" /></asset>
+  
+  <include file="shared_config.xml" />
+  <worldbody>
+    <include file="sawyer_xyz_base_pusher.xml" />
+<!--         <body name="puck" pos="0 0 0.1">
+            <joint limited="false" name="puckjoint" type="free" />
+            <geom friction="0.005 0.004 .001" mass="2.7" mesh="mouse" name="puckbox" pos="0 0 0" rgba=".1 .1 .9 1" type="mesh" />
+
+        </body> -->
+
+        <body name="puck" pos="0 0 0.1">
+          <joint limited="false" name="puckjoint" type="free" />
+      <site name="bottom_site" pos="0 0 -0.05420701603336454" rgba="0 0 0 0" size="0.005" />
+      <site name="top_site" pos="0 0 0.06035158396663547" rgba="0 0 0 0" size="0.005" />
+      <site name="horizontal_radius_site" pos="0.052359600000000006 0.06306790000000001 0" rgba="0 0 0 0" size="0.005" />
+
+    <body name="collision">
+      <geom condim="4" density="2.2697259139165324" friction="2 0.3 0.1" group="1" material="ceramic" mesh="cup" pos="0 0 0" solimp="0.998 0.998 0.001" solref="0.001 1" type="mesh" />
+    </body>
+    <body name="visual">
+      <geom conaffinity="0" contype="0" group="0" mass="0.0001" material="ceramic" mesh="cup" pos="0 0 0" type="mesh" />
+  </body>
+</body>
+
+    <site name="hand-goal-site" pos="0 0 0" rgba="1 0.5 0.5 0.5" size="0.01" />
+        <site name="puck-goal-site" pos="0 0 0" rgba="0.5 0.5 1 0.5" size="0.01" />
+        
+  </worldbody>
+    
+</mujoco>

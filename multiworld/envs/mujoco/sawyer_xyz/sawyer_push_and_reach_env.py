@@ -12,6 +12,7 @@ import PIL.Image as Image
 import mujoco_py
 import  multiworld.envs.mujoco.sawyer_xyz.transform_utils as tu
 import random
+import math
 
 class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 	def __init__(
@@ -33,7 +34,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			goal_high=(0.25, 0.875, 0.02, .2, .8),
 
 			hide_goal_markers=False,
-			init_puck_z=0.01,
+			init_puck_z=0.05,
 			init_hand_xyz=(0, 0.5, 0.07),
 
 			reset_free=False,
@@ -94,7 +95,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		
 		# Whether to return observations in absolute frame or relative frame
 		self.use_absolute_frame = False
-		self.observation_size = 10 #Set this to 9 for absolute frame
+		self.observation_size = 10 #Set this to 10 for absolute frame
 
 		self.hand_and_puck_orientation_space = Box(
 			# np.hstack((self.hand_low, puck_low, -np.ones(9))),
@@ -166,10 +167,9 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		# obj_size = self.sim.model.geom_size[self.sim.model.geom_name2id('puckbox')]
 		# print('obj_size',obj_size)
 
-		# import pdb; pdb.set_trace()
+		# import ipdb; ipdb.set_trace()
 
-		# puck_pos_in_world = self.data.get_body_xpos('puck')
-		# puck_rot_in_world = self.data.get_body_xmat('puck')
+
 		# puck_pose_in_world = tu.make_pose(puck_pos_in_world, puck_rot_in_world)
 
 		# # Compute R_inv for gripper in world frame
@@ -397,6 +397,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		"""
 		WARNING: this resets the sites (because set_state resets sights do).
 		"""
+
 		# import ipdb;ipdb.set_trace()
 		rot_angle = self.z_rotation_angle
 		qpos = self.data.qpos.flat.copy()
@@ -598,7 +599,12 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			# else:
 			# 	r = np.array([-1.0])
 			r = -(puck_distances > self.indicator_threshold).astype(float)
-
+			puck_mat = self.data.get_body_xmat('puck')
+			degree = tu.mat2euler(puck_mat)*180.0/math.pi
+			if abs(degree[0])>5 or abs(degree[1])>5:
+				# print(degree)
+				r = r - 0.5
+				# print(r)
 			# r =  -5 * (1 - np.tanh(0.1*puck_distances)) 
 			done = puck_distances < self.indicator_threshold
 			# r = -(hand_distances > self.indicator_threshold).astype(float)
