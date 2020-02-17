@@ -11,6 +11,7 @@ from multiworld.envs.mujoco.sawyer_xyz.base import SawyerXYZEnv
 import PIL.Image as Image
 import mujoco_py
 import  multiworld.envs.mujoco.sawyer_xyz.transform_utils as tu
+import random
 
 class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 	def __init__(
@@ -42,7 +43,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			clamp_puck_on_step=False,
 
 			puck_radius=.07,
-			z_rotation_angle=0,
+			z_rotation_angle=None,
 			**kwargs
 	):
 		# self._max_episode_steps = 20
@@ -93,7 +94,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 		
 		# Whether to return observations in absolute frame or relative frame
 		self.use_absolute_frame = False
-		self.observation_size = 9 #Set this to 9 for absolute frame
+		self.observation_size = 10 #Set this to 9 for absolute frame
 
 		self.hand_and_puck_orientation_space = Box(
 			# np.hstack((self.hand_low, puck_low, -np.ones(9))),
@@ -102,7 +103,10 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			np.ones(self.observation_size),
 			dtype=np.float32
 		)
-		self.z_rotation_angle = z_rotation_angle
+		if z_rotation_angle is None:
+			self.z_rotation_angle = random.uniform(0, 1) * 2*np.pi
+		else:
+			self.z_rotation_angle = z_rotation_angle
 		self.hand_space = Box(self.hand_low, self.hand_high, dtype=np.float32)
 		self.observation_space = Dict([
 			#('observation', self.hand_and_puck_space),
@@ -247,13 +251,16 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			# flat_obs_orientation = np.concatenate((puck_pos_in_hand, puck_or_in_hand))
 			# flat_obs_puckcenter = np.concatenate((hand_pos_in_puck, hand_or_in_puck))
 
-			start_frame = np.concatenate((self.start_frame,np.array([0])))
+			start_frame = np.concatenate((self.start_frame, np.array([0])))
 
 			e = self.get_endeff_pos()
 			b = self.get_puck_pos()[:2]
+			b_xyz = self.get_puck_pos()
+
 			simple_obs = e - self.get_puck_pos()
-			flat_obs = np.concatenate((e, b))
-			o = self.data.get_body_xmat('puck').flatten().copy()
+			flat_obs = np.concatenate((e, b_xyz))
+
+			o = self.data.get_body_xquat('puck')
 			flat_obs_orientation = np.concatenate((flat_obs, o))
 
 			# hand_goal_world = np.concatenate((self._state_goal[:3],np.array([1])))
@@ -266,19 +273,23 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 			# flat_obs_rel = np.concatenate((hand_pos_in_puck, np.array([0,0])))
 			# desired_goal_puck = np.concatenate((hand_goal_in_puck, puck_goal_in_puck))
 
-			flat_obs_puck_with_ori = np.concatenate((e - start_frame,b - self.start_frame,self.data.get_body_xquat('puck')))
+			# ----> flat_obs_puck_with_ori = np.concatenate((e - start_frame,b - self.start_frame, self.data.get_body_xquat('puck')))
+			
 			# flat_obs_puck_with_ori = np.concatenate((flat_obs_puck_with_ori, desired_goal_puck))
 			# flat_obs_puck_with_ori = np.concatenate((flat_obs_puck_with_ori, flat_obs_rel))
 		return dict(
 			#observation=flat_obs,
-			observation=flat_obs_puck_with_ori,
+			observation=flat_obs_orientation,
+			# observation=flat_obs_puck_with_ori,
 			observation_with_orientation=flat_obs_orientation,
 			# desired_goal=self._state_goal,
 			# achieved_goal=flat_obs,
 			# state_observation=flat_obs,
-			desired_goal=np.concatenate((self._state_goal[:3] - start_frame,self._state_goal[3:] - self.start_frame)),
+			desired_goal=self._state_goal,
+			#desired_goal=np.concatenate((self._state_goal[:3] - start_frame,self._state_goal[3:] - self.start_frame)),
 			# desired_goal_puck,
-			achieved_goal=np.concatenate((e - start_frame,b - self.start_frame))
+			achieved_goal=np.concatenate((e, b))
+			# achieved_goal=np.concatenate((e - start_frame,b - self.start_frame))
 			# flat_obs_rel,
 			# proprio_observation=flat_obs[:3],
 			# proprio_desired_goal=self._state_goal[:3],
@@ -545,6 +556,7 @@ class SawyerPushAndReachXYZEnv(MultitaskEnv, SawyerXYZEnv):
 
 		achieved_goals = achieved_goal
 		desired_goals = desired_goal #(batch_size, 3)
+
 		hand_pos = achieved_goals[:, :3]
 		puck_pos = achieved_goals[:, 3:] #(batch_size, 3)
 		hand_goals = desired_goals[:, :3] #(batch_size, 3)
